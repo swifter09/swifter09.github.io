@@ -30,7 +30,7 @@ export default function Home() {
       <section id="feed" className="feed-section">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">REVIEWED / PUBLISHED</p>
+            <p className="eyebrow">CURATED / SIGNALS</p>
             <h2>技术信号</h2>
           </div>
         </div>

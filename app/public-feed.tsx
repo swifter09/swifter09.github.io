@@ -67,7 +67,7 @@ export function PublicFeed() {
       </div>
 
       {loading ? (
-        <div className="feed-empty"><span className="status-dot" />正在读取已审核内容…</div>
+        <div className="feed-empty"><span className="status-dot" />正在加载内容…</div>
       ) : filtered.length ? (
         <div className="published-grid">
           {filtered.map((item) => (
@@ -89,8 +89,8 @@ export function PublicFeed() {
         <div className="feed-empty">
           <span className="status-dot" />
           <div>
-            <b>暂无已发布内容</b>
-            <p>候选内容不会自动公开；作者确认后才会出现在这里。</p>
+            <b>内容正在整理中</b>
+            <p>稍后再来看看。</p>
           </div>
         </div>
       )}
