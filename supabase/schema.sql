@@ -40,10 +40,45 @@ alter table public.content_items add column if not exists reader_content_zh text
 alter table public.content_items add column if not exists audio_url text;
 alter table public.content_items add column if not exists duration text;
 alter table public.content_items add column if not exists source_published_at timestamptz;
+alter table public.content_items add column if not exists dedupe_key text;
 alter table public.content_items alter column url drop not null;
 create unique index if not exists content_items_url_unique on public.content_items (url);
 create index if not exists content_items_status_created_idx on public.content_items (status, created_at desc);
 create index if not exists sources_enabled_type_idx on public.sources (enabled, source_type);
+
+with ranked_content as (
+  select
+    id,
+    encode(
+      digest(
+        coalesce(source_id::text, lower(coalesce(source, '')))
+        || ':' || category
+        || ':' || lower(regexp_replace(trim(title), '\s+', ' ', 'g')),
+        'sha256'
+      ),
+      'hex'
+    ) as generated_key,
+    row_number() over (
+      partition by
+        coalesce(source_id::text, lower(coalesce(source, ''))),
+        category,
+        lower(regexp_replace(trim(title), '\s+', ' ', 'g'))
+      order by
+        case status when 'published' then 0 when 'review' then 1 else 2 end,
+        created_at asc
+    ) as duplicate_rank
+  from public.content_items
+)
+update public.content_items as content
+set dedupe_key = ranked.generated_key
+from ranked_content as ranked
+where content.id = ranked.id
+  and ranked.duplicate_rank = 1
+  and content.dedupe_key is null;
+
+create unique index if not exists content_items_dedupe_key_unique
+on public.content_items (dedupe_key)
+where dedupe_key is not null;
 
 update public.content_items
 set source_published_at = published_at

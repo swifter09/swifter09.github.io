@@ -65,6 +65,12 @@ function isOwner(session: Session | null) {
   return meta.user_name === "swifter09" || meta.preferred_username === "swifter09";
 }
 
+function reviewItemKey(item: Item) {
+  return `${item.source || ""}:${item.category}:${item.title.trim().toLocaleLowerCase().replace(/\s+/g, " ")}`;
+}
+
+const statusPriority: Record<Status, number> = { published: 0, review: 1, draft: 2 };
+
 export function AdminDashboard() {
   const [session, setSession] = useState<Session | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -76,9 +82,18 @@ export function AdminDashboard() {
   const [reviewStatus, setReviewStatus] = useState<Status | "all">("review");
   const [visibleLimit, setVisibleLimit] = useState(20);
 
+  const deduplicatedItems = useMemo(() => {
+    const unique = new Map<string, Item>();
+    for (const item of items) {
+      const key = reviewItemKey(item);
+      const current = unique.get(key);
+      if (!current || statusPriority[item.status] < statusPriority[current.status]) unique.set(key, item);
+    }
+    return [...unique.values()];
+  }, [items]);
   const moduleItems = useMemo(
-    () => items.filter((item) => reviewModules[reviewModule].categories.includes(item.category)),
-    [items, reviewModule],
+    () => deduplicatedItems.filter((item) => reviewModules[reviewModule].categories.includes(item.category)),
+    [deduplicatedItems, reviewModule],
   );
   const filteredItems = useMemo(
     () => moduleItems.filter((item) =>
@@ -306,7 +321,7 @@ export function AdminDashboard() {
               <h2>审核队列</h2>
               <p>{filteredItems.length} 条符合当前筛选</p>
             </div>
-            <span>{items.filter((item) => item.status === "review").length} 条待审核</span>
+            <span>{deduplicatedItems.filter((item) => item.status === "review").length} 条待审核</span>
           </div>
 
           <div className="review-filters" aria-label="审核队列分类">
@@ -314,7 +329,7 @@ export function AdminDashboard() {
               <span>大模块</span>
               <div>
                 {(Object.keys(reviewModules) as ReviewModule[]).map((module) => {
-                  const count = items.filter((item) =>
+                  const count = deduplicatedItems.filter((item) =>
                     reviewModules[module].categories.includes(item.category)
                     && (reviewStatus === "all" || item.status === reviewStatus)
                   ).length;

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const githubToken = process.env.GITHUB_TOKEN;
@@ -39,6 +41,13 @@ function field(block, names) {
 function attr(block, tag, attribute) {
   const match = block.match(new RegExp(`<${tag}[^>]*${attribute}=["']([^"']+)["'][^>]*>`, "i"));
   return match?.[1] ?? "";
+}
+
+function createDedupeKey(source, title) {
+  const normalizedTitle = title.trim().toLowerCase().replace(/\s+/g, " ");
+  return createHash("sha256")
+    .update(`${source.id}:${source.category}:${normalizedTitle}`)
+    .digest("hex");
 }
 
 function parseFeed(xml) {
@@ -397,6 +406,7 @@ for (const source of sources) {
     );
     const payload = entries.map((entry) => ({
       ...entry,
+      dedupe_key: createDedupeKey(source, entry.title),
       source_id: source.id,
       source: source.name,
       category: source.category,
@@ -404,7 +414,7 @@ for (const source of sources) {
     }));
 
     if (payload.length) {
-      await api("content_items?on_conflict=url", {
+      await api("content_items", {
         method: "POST",
         headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
         body: JSON.stringify(payload),
