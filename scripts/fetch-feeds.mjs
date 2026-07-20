@@ -229,10 +229,17 @@ async function translateMarkdownChunk(markdown) {
 
 async function translatePendingReaderContent() {
   if (!githubToken) return;
-  const response = await api(
+  const priorityResponse = await api(
+    "content_items?category=eq.ai&source=eq.Google%20AI%20Blog&reader_content=not.is.null&reader_content_zh=is.null&select=id,title,reader_content&order=created_at.desc&limit=3"
+  );
+  const generalResponse = await api(
     "content_items?category=eq.ai&reader_content=not.is.null&reader_content_zh=is.null&select=id,title,reader_content&order=created_at.desc&limit=8"
   );
-  const pending = await response.json();
+  const priority = await priorityResponse.json();
+  const general = await generalResponse.json();
+  const pending = [...priority, ...general].filter(
+    (item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index
+  ).slice(0, 8);
   let completed = 0;
   for (const item of pending) {
     try {
