@@ -38,11 +38,27 @@ export function AdminDashboard() {
 
   useEffect(() => {
     if (!supabase) { setReady(true); return; }
-    supabase.auth.getSession().then(({ data }) => {
+
+    async function restoreSession() {
+      const callback = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = callback.get("access_token");
+      const refreshToken = callback.get("refresh_token");
+
+      if (accessToken && refreshToken) {
+        await supabase!.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
+      const { data } = await supabase!.auth.getSession();
       setSession(data.session);
       setReady(true);
       if (isOwner(data.session)) loadItems();
-    });
+    }
+
+    restoreSession();
     const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
       if (isOwner(next)) loadItems();
