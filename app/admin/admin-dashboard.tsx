@@ -12,7 +12,8 @@ type Item = {
   summary: string | null;
   title_zh: string | null;
   summary_zh: string | null;
-  url: string;
+  body: string | null;
+  url: string | null;
   source: string | null;
   status: Status;
   created_at: string;
@@ -113,7 +114,8 @@ export function AdminDashboard() {
       category: form.get("category"),
       title: form.get("title"),
       summary: form.get("summary"),
-      url: form.get("url"),
+      body: form.get("body"),
+      url: String(form.get("url") || "").trim() || null,
       source: form.get("source"),
       status: "draft",
     };
@@ -174,6 +176,24 @@ export function AdminDashboard() {
     if (!error) await loadItems();
   }
 
+  async function editItem(event: FormEvent<HTMLFormElement>, id: string) {
+    event.preventDefault();
+    if (!supabase) return;
+    const form = new FormData(event.currentTarget);
+    const changes = {
+      category: form.get("category"),
+      title: form.get("title"),
+      summary: form.get("summary"),
+      body: form.get("body"),
+      url: String(form.get("url") || "").trim() || null,
+      source: String(form.get("source") || "").trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from("content_items").update(changes).eq("id", id);
+    setMessage(error ? error.message : "内容修改已保存，发布状态未改变");
+    if (!error) await loadItems();
+  }
+
   if (!ready) return <main className="admin-shell"><p>正在验证身份…</p></main>;
 
   if (!supabase) {
@@ -228,10 +248,12 @@ export function AdminDashboard() {
           </select></label>
           <label>标题<input name="title" required /></label>
           <label>摘要<textarea name="summary" rows={4} /></label>
-          <label>原文链接<input name="url" type="url" required /></label>
+          <label>正文（可选，适合 Codex 对话整理稿）<textarea name="body" rows={10} /></label>
+          <label>原文链接（自有文章可留空）<input name="url" type="url" /></label>
           <label>来源
             <select name="source" defaultValue="">
               <option value="">手动填写 / 未指定</option>
+              <option value="Codex 对话整理">Codex 对话整理</option>
               {sources.map((source) => <option key={source.id} value={source.name}>{source.name}</option>)}
             </select>
           </label>
@@ -252,7 +274,23 @@ export function AdminDashboard() {
                   {item.summary && <p>{item.summary}</p>}
                 </details>
               )}
-              <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>
+              {item.url && <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>}
+              <details className="item-editor">
+                <summary>编辑内容</summary>
+                <form className="inline-editor" onSubmit={(event) => editItem(event, item.id)}>
+                  <label>分类<select name="category" defaultValue={item.category}>
+                    {(Object.keys(categoryLabels) as Category[]).map((category) => (
+                      <option key={category} value={category}>{categoryLabels[category]}</option>
+                    ))}
+                  </select></label>
+                  <label>标题<input name="title" defaultValue={item.title} required /></label>
+                  <label>摘要<textarea name="summary" rows={4} defaultValue={item.summary || ""} /></label>
+                  <label>正文<textarea name="body" rows={12} defaultValue={item.body || ""} /></label>
+                  <label>原文链接<input name="url" type="url" defaultValue={item.url || ""} /></label>
+                  <label>来源<input name="source" defaultValue={item.source || ""} /></label>
+                  <button type="submit" className="admin-primary">保存修改</button>
+                </form>
+              </details>
               <label className="review-category">内容分类
                 <select value={item.category} onChange={(event) => setCategory(item.id, event.target.value as Category)}>
                   {(Object.keys(categoryLabels) as Category[]).map((category) => (

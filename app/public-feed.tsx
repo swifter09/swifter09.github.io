@@ -11,9 +11,17 @@ type PublishedItem = {
   summary: string | null;
   title_zh: string | null;
   summary_zh: string | null;
-  url: string;
+  body: string | null;
+  url: string | null;
   source: string | null;
   published_at: string;
+};
+type PublicSource = {
+  id: string;
+  name: string;
+  source_type: string;
+  category: Category;
+  homepage_url: string | null;
 };
 
 const labels: Record<Category | "all", string> = {
@@ -31,6 +39,7 @@ const supabase = url && key ? createClient(url, key) : null;
 
 export function PublicFeed() {
   const [items, setItems] = useState<PublishedItem[]>([]);
+  const [sources, setSources] = useState<PublicSource[]>([]);
   const [active, setActive] = useState<Category | "all">("all");
   const [loading, setLoading] = useState(Boolean(supabase));
 
@@ -38,13 +47,20 @@ export function PublicFeed() {
     if (!supabase) return;
     supabase
       .from("content_items")
-      .select("id,category,title,summary,title_zh,summary_zh,url,source,published_at")
+      .select("id,category,title,summary,title_zh,summary_zh,body,url,source,published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data }) => {
         setItems((data as PublishedItem[] | null) ?? []);
         setLoading(false);
       });
+    supabase
+      .from("sources")
+      .select("id,name,source_type,category,homepage_url")
+      .eq("enabled", true)
+      .not("homepage_url", "is", null)
+      .order("name")
+      .then(({ data }) => setSources((data as PublicSource[] | null) ?? []));
   }, []);
 
   const filtered = useMemo(
@@ -82,8 +98,18 @@ export function PublicFeed() {
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
               <div className="published-footer">
                 <span>{item.source || "字节漫游"}</span>
-                <a href={item.url} target="_blank" rel="noreferrer">阅读原文 ↗</a>
+                {item.url ? (
+                  <a href={item.url} target="_blank" rel="noreferrer">阅读原文 ↗</a>
+                ) : item.body ? (
+                  <span>站内学习笔记</span>
+                ) : null}
               </div>
+              {item.body && (
+                <details className="article-body">
+                  <summary>展开阅读</summary>
+                  <div>{item.body}</div>
+                </details>
+              )}
             </article>
           ))}
         </div>
@@ -95,6 +121,27 @@ export function PublicFeed() {
             <p>稍后再来看看。</p>
           </div>
         </div>
+      )}
+
+      {active === "tech_feed" && (
+        <section className="public-sources" aria-labelledby="source-directory-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">SOURCE / DIRECTORY</p>
+              <h2 id="source-directory-title">持续关注的技术号</h2>
+            </div>
+          </div>
+          <p className="source-intro">这些是本站候选内容的抓取来源；文章只有经过我的阅读与审核后，才会进入“技术文章”精选。</p>
+          <div className="public-source-grid">
+            {sources.map((source) => (
+              <a key={source.id} href={source.homepage_url!} target="_blank" rel="noreferrer">
+                <span>{source.source_type}</span>
+                <b>{source.name}</b>
+                <i>访问来源 ↗</i>
+              </a>
+            ))}
+          </div>
+        </section>
       )}
     </>
   );

@@ -22,7 +22,7 @@ export default function Home() {
           <p className="eyebrow"><span>PERSONAL</span> / TECH INTELLIGENCE</p>
           <h1>把技术世界，<br />收进一个清醒的日常。</h1>
           <p className="hero-lede">
-            关注值得长期阅读的技术文章、播客、开源项目与 AI 动态，减少噪音，保留真正有用的信号。
+            这是我的个人学习场景：收集技术信号，阅读后审核，再把真正值得回看的文章、播客、项目与 AI 动态整理成精选。
           </p>
         </div>
       </section>
@@ -32,6 +32,7 @@ export default function Home() {
           <div>
             <p className="eyebrow">CURATED / SIGNALS</p>
             <h2>技术信号</h2>
+            <p className="section-description">“技术文章”是我阅读并审核通过的学习精选；来自抓取和 Codex 对话的内容默认仅在后台保存，批准后才会公开。</p>
           </div>
         </div>
         <PublicFeed />

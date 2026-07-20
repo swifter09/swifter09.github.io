@@ -34,6 +34,8 @@ alter table public.content_items add column if not exists external_id text;
 alter table public.content_items add column if not exists discovered_at timestamptz not null default now();
 alter table public.content_items add column if not exists title_zh text;
 alter table public.content_items add column if not exists summary_zh text;
+alter table public.content_items add column if not exists body text;
+alter table public.content_items alter column url drop not null;
 create unique index if not exists content_items_url_unique on public.content_items (url);
 create index if not exists content_items_status_created_idx on public.content_items (status, created_at desc);
 create index if not exists sources_enabled_type_idx on public.sources (enabled, source_type);
@@ -83,9 +85,10 @@ on public.content_items for delete
 using (public.is_blog_admin());
 
 drop policy if exists "Owner can read sources" on public.sources;
-create policy "Owner can read sources"
+drop policy if exists "Enabled sources are public" on public.sources;
+create policy "Enabled sources are public"
 on public.sources for select
-using (public.is_blog_admin());
+using (enabled or public.is_blog_admin());
 
 drop policy if exists "Owner can create sources" on public.sources;
 create policy "Owner can create sources"
