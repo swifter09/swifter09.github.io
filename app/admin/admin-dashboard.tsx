@@ -275,6 +275,7 @@ export function AdminDashboard() {
                 </details>
               )}
               {item.url && <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>}
+              <a href={`/article/?id=${item.id}&review=1`}>阅读全文并审核 →</a>
               <details className="item-editor">
                 <summary>编辑内容</summary>
                 <form className="inline-editor" onSubmit={(event) => editItem(event, item.id)}>

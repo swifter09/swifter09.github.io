@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, Session } from "@supabase/supabase-js";
 
 type Article = {
   id: string;
@@ -13,7 +13,9 @@ type Article = {
   body: string | null;
   url: string | null;
   source: string | null;
-  published_at: string;
+  status: "draft" | "review" | "published";
+  published_at: string | null;
+  created_at: string;
 };
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -55,8 +57,15 @@ function RichBody({ body }: { body: string }) {
 
 export function ArticleReader() {
   const [article, setArticle] = useState<Article | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const isOwner = (current: Session | null) => {
+    const meta = current?.user.user_metadata ?? {};
+    return meta.user_name === "swifter09" || meta.preferred_username === "swifter09";
+  };
 
   useEffect(() => {
     if (!supabase) {
@@ -70,18 +79,52 @@ export function ArticleReader() {
       setMissing(true);
       return;
     }
-    supabase
-      .from("content_items")
-      .select("id,category,title,title_zh,summary,summary_zh,body,url,source,published_at")
-      .eq("id", id)
-      .eq("status", "published")
-      .maybeSingle()
-      .then(({ data }) => {
-        setArticle((data as Article | null) ?? null);
-        setMissing(!data);
-        setLoading(false);
-      });
+    const load = async () => {
+      const { data: authData } = await supabase.auth.getSession();
+      setSession(authData.session);
+      const { data } = await supabase
+        .from("content_items")
+        .select("id,category,title,title_zh,summary,summary_zh,body,url,source,status,published_at,created_at")
+        .eq("id", id)
+        .maybeSingle();
+      setArticle((data as Article | null) ?? null);
+      setMissing(!data);
+      setLoading(false);
+    };
+    load();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
+    return () => listener.subscription.unsubscribe();
   }, []);
+
+  async function approveArticle() {
+    if (!supabase || !article || !isOwner(session)) return;
+    const publishedAt = new Date().toISOString();
+    const { error } = await supabase
+      .from("content_items")
+      .update({ status: "published", published_at: publishedAt, updated_at: publishedAt })
+      .eq("id", article.id);
+    if (error) {
+      setMessage(`发布失败：${error.message}`);
+      return;
+    }
+    setArticle({ ...article, status: "published", published_at: publishedAt });
+    setMessage("已批准发布，公开网站现在可以访问这篇文章。");
+  }
+
+  async function keepForReview() {
+    if (!supabase || !article || !isOwner(session)) return;
+    const { error } = await supabase
+      .from("content_items")
+      .update({ status: "review", updated_at: new Date().toISOString() })
+      .eq("id", article.id);
+    if (error) {
+      setMessage(`更新失败：${error.message}`);
+      return;
+    }
+    setArticle({ ...article, status: "review" });
+    setMessage("已保留在待审核队列。");
+  }
 
   if (loading) {
     return <main className="reader-shell"><div className="reader-state">正在载入文章…</div></main>;
@@ -117,32 +160,44 @@ export function ArticleReader() {
         <a className="reader-back" href="/#feed">← 返回</a>
         <div className="reader-tags">
           <span>{article.category === "article" ? "技术文章" : "学习精选"}</span>
-          <span>REVIEWED</span>
+          <span>{article.status.toUpperCase()}</span>
         </div>
         <h1>{title}</h1>
         <div className="reader-meta">
           <span>{article.source || "字节漫游"}</span>
-          <time>{new Date(article.published_at).toLocaleDateString("zh-CN")}</time>
-          <span>由作者审核发布</span>
+          <time>{new Date(article.published_at || article.created_at).toLocaleDateString("zh-CN")}</time>
+          <span>{article.status === "published" ? "由作者审核发布" : "仅作者可见"}</span>
         </div>
 
         {summary && <p className="reader-lead">{summary}</p>}
 
-        {article.body ? (
+        {article.url ? (
+          <section className="original-reader">
+            <div className="original-reader-head">
+              <div>
+                <p className="eyebrow">ORIGINAL / READING</p>
+                <h2>原文内容</h2>
+              </div>
+              <a href={article.url} target="_blank" rel="noreferrer">新窗口打开 ↗</a>
+            </div>
+            <iframe
+              src={article.url}
+              title="原文内容"
+              loading="eager"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </section>
+        ) : article.body ? (
           <RichBody body={article.body} />
         ) : (
-          <section className="reader-note">
-            <p className="eyebrow">READING NOTE</p>
-            <h2>等待补充学习笔记</h2>
-            <p>这篇文章已经通过审核，目前保留中文摘要供快速判断。完整内容请前往原文阅读，后续可在作者后台继续补充个人笔记。</p>
-          </section>
+          <p className="reader-empty-body">这篇内容暂时没有正文。</p>
         )}
 
         <footer className="reader-source">
           <div>
             <p className="eyebrow">SOURCE / ATTRIBUTION</p>
             <h2>继续阅读</h2>
-            <p>本站保存的是审核后的摘要与个人学习笔记，原始内容及版权归原作者和发布方所有。</p>
+            <p>原文通过发布方页面直接展示，内容及版权归原作者和发布方所有。</p>
           </div>
           {article.url && (
             <a href={article.url} target="_blank" rel="noreferrer">
@@ -150,6 +205,23 @@ export function ArticleReader() {
             </a>
           )}
         </footer>
+
+        {isOwner(session) && (
+          <aside className="reader-review-bar">
+            <div>
+              <span>作者审核模式</span>
+              <b>{article.status === "published" ? "已公开发布" : "阅读完成后可直接批准"}</b>
+              {message && <small>{message}</small>}
+            </div>
+            <div className="reader-review-actions">
+              <a href="/admin/">返回后台编辑</a>
+              <button type="button" onClick={keepForReview}>保留待审核</button>
+              <button type="button" className="approve" onClick={approveArticle} disabled={article.status === "published"}>
+                {article.status === "published" ? "已发布" : "批准发布"}
+              </button>
+            </div>
+          </aside>
+        )}
       </article>
     </main>
   );
