@@ -173,10 +173,21 @@ values
   ('Aider', 'github', 'project', 'https://github.com/Aider-AI/aider/releases.atom', 'https://github.com/Aider-AI/aider'),
   ('Cline', 'github', 'project', 'https://github.com/cline/cline/releases.atom', 'https://github.com/cline/cline'),
   ('美团技术团队', 'wechat', 'tech_feed', null, 'https://tech.meituan.com'),
-  ('腾讯技术工程', 'wechat', 'tech_feed', null, null),
-  ('阿里云开发者', 'wechat', 'tech_feed', null, null),
-  ('字节跳动技术团队', 'wechat', 'tech_feed', null, null)
+  ('腾讯技术工程', 'wechat', 'tech_feed', null, 'https://developer.cloud.tencent.com/'),
+  ('阿里云开发者', 'wechat', 'tech_feed', null, 'https://developer.aliyun.com/'),
+  ('字节跳动技术团队', 'wechat', 'tech_feed', null, 'https://juejin.cn/user/1838039172387262/posts')
 on conflict (name, source_type) do nothing;
+
+update public.sources as source
+set homepage_url = mapping.homepage_url
+from (
+  values
+    ('腾讯技术工程', 'https://developer.cloud.tencent.com/'),
+    ('阿里云开发者', 'https://developer.aliyun.com/'),
+    ('字节跳动技术团队', 'https://juejin.cn/user/1838039172387262/posts')
+) as mapping(name, homepage_url)
+where source.name = mapping.name
+  and source.source_type = 'wechat';
 
 update public.sources
 set
