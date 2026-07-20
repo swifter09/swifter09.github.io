@@ -62,16 +62,18 @@ export function AdminDashboard() {
       const { data } = await supabase!.auth.getSession();
       setSession(data.session);
       setReady(true);
-      if (isOwner(data.session)) loadItems();
     }
 
     restoreSession();
     const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
-      if (isOwner(next)) loadItems();
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isOwner(session)) loadItems();
+  }, [session]);
 
   async function signIn() {
     if (!supabase) return;
