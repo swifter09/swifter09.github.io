@@ -169,6 +169,23 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .admin-message { color: var(--green); font-size: 11px; }
 .admin-flash { margin: 20px 0 0; padding: 12px 14px; border: 1px solid rgba(154,247,194,.35); background: rgba(154,247,194,.05); }
 .review-list article { padding: 18px 0; border-top: 1px solid var(--line); }
+.review-list-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.review-list-heading h2 { margin-bottom: 5px; }
+.review-list-heading p { margin: 0; }
+.review-list-heading > span { color: var(--green); font: 9px "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; white-space: nowrap; }
+.review-filters { display: grid; gap: 14px; margin: 20px 0 8px; padding: 16px; border: 1px solid var(--line); background: var(--bg); }
+.review-filter-level { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: start; gap: 10px; }
+.review-filter-level > span { padding-top: 8px; color: var(--muted); font: 8px "SFMono-Regular", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.review-filter-level > div { display: flex; flex-wrap: wrap; gap: 7px; }
+.review-filter-level button { display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px; font-size: 10px; }
+.review-filter-level button b { min-width: 18px; padding: 2px 5px; background: rgba(255,255,255,.04); color: var(--muted); font: 8px "SFMono-Regular", Consolas, monospace; text-align: center; }
+.review-filter-level button.active { border-color: var(--green); color: var(--green); background: rgba(154,247,194,.06); }
+.review-filter-level button.active b { color: var(--green); }
+.review-status-filter { padding-top: 12px; border-top: 1px solid var(--line); }
+.review-empty { margin-top: 14px; padding: 34px 18px; border: 1px dashed var(--line); text-align: center; }
+.review-empty b { font-size: 13px; }
+.review-empty p { margin-bottom: 0; }
+.review-load-more { width: 100%; margin-top: 16px; color: var(--blue) !important; }
 .review-list article > div:first-child { display: flex; justify-content: space-between; color: var(--muted); font: 9px "SFMono-Regular", Consolas, monospace; text-transform: uppercase; }
 .review-list article > div:first-child b { color: var(--green); }
 .review-source { display: flex; align-items: center; gap: 9px; margin-top: 13px; color: var(--muted); font-size: 10px; }

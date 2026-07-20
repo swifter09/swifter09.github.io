@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createClient, Session } from "@supabase/supabase-js";
 
 type Status = "draft" | "review" | "published";
@@ -27,6 +27,19 @@ const categoryLabels: Record<Category, string> = {
   podcast: "播客",
   project: "项目",
   tech_feed: "技术号",
+};
+type ReviewModule = "content" | "media" | "build" | "source";
+const reviewModules: Record<ReviewModule, { label: string; categories: Category[] }> = {
+  content: { label: "内容阅读", categories: ["ai", "article"] },
+  media: { label: "音频节目", categories: ["podcast"] },
+  build: { label: "项目作品", categories: ["project"] },
+  source: { label: "技术来源", categories: ["tech_feed"] },
+};
+const statusLabels: Record<Status | "all", string> = {
+  all: "全部状态",
+  review: "待审核",
+  draft: "草稿",
+  published: "已发布",
 };
 type Source = {
   id: string;
@@ -56,6 +69,29 @@ export function AdminDashboard() {
   const [sources, setSources] = useState<Source[]>([]);
   const [ready, setReady] = useState(false);
   const [message, setMessage] = useState("");
+  const [reviewModule, setReviewModule] = useState<ReviewModule>("content");
+  const [reviewCategory, setReviewCategory] = useState<Category | "all">("all");
+  const [reviewStatus, setReviewStatus] = useState<Status | "all">("review");
+  const [visibleLimit, setVisibleLimit] = useState(20);
+
+  const moduleItems = useMemo(
+    () => items.filter((item) => reviewModules[reviewModule].categories.includes(item.category)),
+    [items, reviewModule],
+  );
+  const filteredItems = useMemo(
+    () => moduleItems.filter((item) =>
+      (reviewCategory === "all" || item.category === reviewCategory)
+      && (reviewStatus === "all" || item.status === reviewStatus)
+    ),
+    [moduleItems, reviewCategory, reviewStatus],
+  );
+  const visibleItems = filteredItems.slice(0, visibleLimit);
+
+  function selectReviewModule(module: ReviewModule) {
+    setReviewModule(module);
+    setReviewCategory("all");
+    setVisibleLimit(20);
+  }
 
   async function loadItems() {
     if (!supabase) return;
@@ -263,8 +299,71 @@ export function AdminDashboard() {
         </form>
 
         <div className="review-list">
-          <h2>审核队列</h2>
-          {items.length ? items.map((item) => (
+          <div className="review-list-heading">
+            <div>
+              <h2>审核队列</h2>
+              <p>{filteredItems.length} 条符合当前筛选</p>
+            </div>
+            <span>{items.filter((item) => item.status === "review").length} 条待审核</span>
+          </div>
+
+          <div className="review-filters" aria-label="审核队列分类">
+            <div className="review-filter-level">
+              <span>大模块</span>
+              <div>
+                {(Object.keys(reviewModules) as ReviewModule[]).map((module) => {
+                  const count = items.filter((item) =>
+                    reviewModules[module].categories.includes(item.category)
+                    && (reviewStatus === "all" || item.status === reviewStatus)
+                  ).length;
+                  return (
+                    <button type="button" key={module}
+                      className={reviewModule === module ? "active" : ""}
+                      aria-pressed={reviewModule === module}
+                      onClick={() => selectReviewModule(module)}>
+                      {reviewModules[module].label}<b>{count}</b>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="review-filter-level">
+              <span>子模块</span>
+              <div>
+                <button type="button" className={reviewCategory === "all" ? "active" : ""}
+                  aria-pressed={reviewCategory === "all"}
+                  onClick={() => { setReviewCategory("all"); setVisibleLimit(20); }}>
+                  全部<b>{moduleItems.filter((item) => reviewStatus === "all" || item.status === reviewStatus).length}</b>
+                </button>
+                {reviewModules[reviewModule].categories.map((category) => (
+                  <button type="button" key={category}
+                    className={reviewCategory === category ? "active" : ""}
+                    aria-pressed={reviewCategory === category}
+                    onClick={() => { setReviewCategory(category); setVisibleLimit(20); }}>
+                    {categoryLabels[category]}
+                    <b>{moduleItems.filter((item) =>
+                      item.category === category && (reviewStatus === "all" || item.status === reviewStatus)
+                    ).length}</b>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="review-filter-level review-status-filter">
+              <span>状态</span>
+              <div>
+                {(Object.keys(statusLabels) as Array<Status | "all">).map((status) => (
+                  <button type="button" key={status}
+                    className={reviewStatus === status ? "active" : ""}
+                    aria-pressed={reviewStatus === status}
+                    onClick={() => { setReviewStatus(status); setVisibleLimit(20); }}>
+                    {statusLabels[status]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {visibleItems.length ? visibleItems.map((item) => (
             <article key={item.id}>
               <div><span>{item.category}</span><b>{item.status}</b></div>
               <div className="review-source">
@@ -325,7 +424,12 @@ export function AdminDashboard() {
                 <button type="button" className="approve" onClick={() => setStatus(item.id, "published")}>批准发布</button>
               </div>
             </article>
-          )) : <p className="admin-muted">审核队列为空。</p>}
+          )) : <div className="review-empty"><b>当前分组没有内容</b><p>可以切换子模块或状态查看其他内容。</p></div>}
+          {visibleItems.length < filteredItems.length && (
+            <button type="button" className="review-load-more" onClick={() => setVisibleLimit((limit) => limit + 20)}>
+              再显示 20 条 · 剩余 {filteredItems.length - visibleItems.length} 条
+            </button>
+          )}
         </div>
       </section>
 
