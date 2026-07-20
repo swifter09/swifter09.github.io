@@ -160,6 +160,7 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 }
 .editor-form textarea { resize: vertical; }
 .admin-message { color: var(--green); font-size: 11px; }
+.admin-flash { margin: 20px 0 0; padding: 12px 14px; border: 1px solid rgba(154,247,194,.35); background: rgba(154,247,194,.05); }
 .review-list article { padding: 18px 0; border-top: 1px solid var(--line); }
 .review-list article > div:first-child { display: flex; justify-content: space-between; color: var(--muted); font: 9px "SFMono-Regular", Consolas, monospace; text-transform: uppercase; }
 .review-list article > div:first-child b { color: var(--green); }
@@ -167,6 +168,16 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .review-list article > a { color: var(--blue); font-size: 11px; }
 .review-actions { display: flex; gap: 8px; margin-top: 14px; }
 .review-actions .approve { border-color: var(--green); color: var(--green); }
+.sources-admin { display: grid; grid-template-columns: .9fr 1.1fr; gap: 26px; padding-top: 26px; }
+.source-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; align-content: start; }
+.source-form > div, .source-form > button { grid-column: 1 / -1; }
+.source-form > div { margin-bottom: 8px; }
+.source-form .admin-muted { margin-top: -10px; }
+.source-list-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.source-list-heading span { color: var(--blue); font: 10px "SFMono-Regular", Consolas, monospace; }
+.source-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; margin-top: 12px; }
+.source-row a { color: var(--blue); font-size: 11px; }
+.source-row small { color: var(--muted); font-size: 9px; text-align: right; }
 
 @keyframes pulse { 50% { opacity: .35; } }
 @keyframes scan { to { transform: rotate(360deg); } }
@@ -179,7 +190,7 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
   .dashboard, .lower-grid { grid-template-columns: 1fr; }
   .project-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .published-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .admin-grid { grid-template-columns: 1fr; }
+  .admin-grid, .sources-admin { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
   .hero { min-height: 0; } h1 { font-size: 43px; }
@@ -195,4 +206,8 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
   .review-flow div { grid-template-columns: 36px 1fr; }
   .review-flow small { grid-column: 2; }
   .admin-header { gap: 20px; }
+  .source-form { grid-template-columns: 1fr; }
+  .source-form > * { grid-column: 1; }
+  .source-row { grid-template-columns: 1fr; }
+  .source-row small { text-align: left; }
 }
