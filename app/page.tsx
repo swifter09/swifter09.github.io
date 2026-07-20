@@ -30,13 +30,6 @@ export default function Home() {
       </section>
 
       <section id="feed" className="feed-section">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">CURATED / KNOWLEDGE BASE</p>
-            <h2>我的技术信息流</h2>
-            <p className="section-description">所有公开内容均由我阅读并审核；抓取内容和 Codex 对话默认只进入私有后台。</p>
-          </div>
-        </div>
         <PublicFeed />
       </section>
 

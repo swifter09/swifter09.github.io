@@ -8,7 +8,7 @@ const styles = fs.readFileSync(new URL("../app/globals.css", import.meta.url), "
 
 test("homepage uses a compact personal masthead and searchable content browser", () => {
   assert.match(page, /hero-terminal/);
-  assert.match(page, /我的技术信息流/);
+  assert.doesNotMatch(page, /我的技术信息流/);
   assert.match(feed, /搜索标题、摘要或来源/);
   assert.match(feed, /feed-browser/);
 });
@@ -22,4 +22,6 @@ test("content browser includes category tabs and a compact daily radar", () => {
 
 test("technology directory only lists technology sources", () => {
   assert.match(feed, /source\.category === "tech_feed"/);
+  assert.match(feed, /active === "tech_feed"/);
+  assert.match(styles, /\.tech-feed-directory \{ margin-top: 0/);
 });

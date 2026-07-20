@@ -124,6 +124,25 @@ export function PublicFeed() {
 
       {loading ? (
         <div className="feed-empty"><span className="status-dot" />正在加载内容…</div>
+      ) : active === "tech_feed" ? (
+        <section className="public-sources tech-feed-directory" aria-labelledby="source-directory-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">SOURCE / DIRECTORY</p>
+              <h2 id="source-directory-title">持续关注的技术号</h2>
+            </div>
+          </div>
+          <p className="source-intro">这些是本站候选内容的抓取来源；文章只有经过我的阅读与审核后，才会进入“技术文章”精选。</p>
+          <div className="public-source-grid">
+            {sources.filter((source) => source.category === "tech_feed").map((source) => (
+              <a key={source.id} href={source.homepage_url!} target="_blank" rel="noreferrer">
+                <span>{source.source_type}</span>
+                <b>{source.name}</b>
+                <i>访问来源 ↗</i>
+              </a>
+            ))}
+          </div>
+        </section>
       ) : filtered.length ? (
         <div className="feed-browser">
           <div className="feed-primary">
@@ -196,27 +215,6 @@ export function PublicFeed() {
             <p>稍后再来看看。</p>
           </div>
         </div>
-      )}
-
-      {active === "tech_feed" && (
-        <section className="public-sources" aria-labelledby="source-directory-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">SOURCE / DIRECTORY</p>
-              <h2 id="source-directory-title">持续关注的技术号</h2>
-            </div>
-          </div>
-          <p className="source-intro">这些是本站候选内容的抓取来源；文章只有经过我的阅读与审核后，才会进入“技术文章”精选。</p>
-          <div className="public-source-grid">
-            {sources.filter((source) => source.category === "tech_feed").map((source) => (
-              <a key={source.id} href={source.homepage_url!} target="_blank" rel="noreferrer">
-                <span>{source.source_type}</span>
-                <b>{source.name}</b>
-                <i>访问来源 ↗</i>
-              </a>
-            ))}
-          </div>
-        </section>
       )}
 
       {active === "podcast" && (
