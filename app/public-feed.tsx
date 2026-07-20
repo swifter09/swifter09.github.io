@@ -156,16 +156,12 @@ export function PublicFeed() {
             const projectHref = item.category === "project" ? sourceRecord?.homepage_url || item.url : null;
             const image = item.category === "project" ? projectImage(sourceRecord) : null;
             return (
-            <article className={`published-card${item.category === "podcast" ? " podcast-episode" : ""}${item.category === "project" ? " project-entry" : ""}`} key={item.id}>
-              <div className={`published-media${image ? " has-image" : ""}`}>
-                {image
-                  ? <img src={image} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                  : <>
-                    <span>{labels[item.category]}</span>
-                    <b>{item.source || "字节漫游"}</b>
-                    <i aria-hidden="true">{item.category === "podcast" ? "◉" : "↗"}</i>
-                  </>}
-              </div>
+            <article className={`published-card${image ? " has-media" : " no-media"}${item.category === "podcast" ? " podcast-episode" : ""}${item.category === "project" ? " project-entry" : ""}`} key={item.id}>
+              {image && (
+                <div className="published-media">
+                  <img src={image} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                </div>
+              )}
               <div className="published-content">
                 <div className="published-meta">
                   <span>{labels[item.category]}</span>
