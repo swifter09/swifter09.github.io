@@ -23,6 +23,17 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
+function isArxivArticle(article: Article) {
+  return article.source?.toLowerCase().includes("arxiv") || article.url?.includes("arxiv.org/") || false;
+}
+
+function getArxivPdfUrl(url: string | null) {
+  if (!url) return null;
+  const match = url.match(/https?:\/\/(?:www\.)?arxiv\.org\/(?:abs|html|pdf)\/([^?#]+)/i);
+  if (!match) return url;
+  return `https://arxiv.org/pdf/${match[1].replace(/\.pdf$/i, "")}`;
+}
+
 function RichBody({ body }: { body: string }) {
   const lines = body.split("\n");
   let inCode = false;
@@ -146,6 +157,10 @@ export function ArticleReader() {
 
   const title = article.title_zh || article.title;
   const summary = article.summary_zh || article.summary;
+  const isArxiv = isArxivArticle(article);
+  const arxivPdfUrl = isArxiv ? getArxivPdfUrl(article.url) : null;
+  const originalAbstract =
+    isArxiv && article.summary && article.summary !== article.summary_zh ? article.summary : null;
 
   return (
     <main className="reader-shell">
@@ -172,7 +187,23 @@ export function ArticleReader() {
 
         {summary && <p className="reader-lead">{summary}</p>}
 
-        {article.body || article.reader_content ? (
+        {isArxiv ? (
+          <section className="paper-summary" aria-label="论文摘要">
+            <p className="eyebrow">PAPER / ABSTRACT</p>
+            <h2>论文摘要</h2>
+            <p className="paper-summary-zh">{summary || "该论文暂未提供摘要。"}</p>
+            {originalAbstract && (
+              <details className="paper-summary-original">
+                <summary>查看英文摘要</summary>
+                <p>{originalAbstract}</p>
+              </details>
+            )}
+            <div className="paper-summary-actions">
+              {arxivPdfUrl && <a href={arxivPdfUrl} target="_blank" rel="noreferrer">查看 PDF ↗</a>}
+              {article.url && <a href={article.url} target="_blank" rel="noreferrer">查看论文页面 ↗</a>}
+            </div>
+          </section>
+        ) : article.body || article.reader_content ? (
           <RichBody body={article.body || article.reader_content || ""} />
         ) : article.url ? (
           <section className="original-reader">
@@ -195,7 +226,7 @@ export function ArticleReader() {
             <h2>继续阅读</h2>
             <p>本站提供便于审核的阅读版正文；内容及版权归原作者和发布方所有。</p>
           </div>
-          {article.url && (
+          {article.url && !isArxiv && (
             <a href={article.url} target="_blank" rel="noreferrer">
               查看原文 <span>↗</span>
             </a>

@@ -17,3 +17,11 @@ test("article reader supports private review and in-page approval", () => {
   assert.doesNotMatch(reader, /\.eq\("status", "published"\)/);
   assert.match(reader, /批准发布/);
 });
+
+test("arXiv papers use an abstract-first reader and are excluded from body extraction", () => {
+  assert.match(reader, /isArxivArticle/);
+  assert.match(reader, /查看 PDF/);
+  assert.match(reader, /查看英文摘要/);
+  assert.match(ingest, /isArxivUrl/);
+  assert.match(ingest, /filter\(\(item\) => !isArxivUrl\(item\.url\)\)/);
+});

@@ -218,11 +218,19 @@ async function fetchReaderContent(item) {
   return content.length;
 }
 
+function isArxivUrl(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().endsWith("arxiv.org");
+  } catch {
+    return false;
+  }
+}
+
 async function backfillReaderContent() {
   const response = await api(
     "content_items?url=not.is.null&reader_content=is.null&select=id,url,title&order=created_at.asc&limit=100"
   );
-  const pending = await response.json();
+  const pending = (await response.json()).filter((item) => !isArxivUrl(item.url));
   let completed = 0;
 
   for (let index = 0; index < pending.length; index += 5) {

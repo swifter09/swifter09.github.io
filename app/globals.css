@@ -207,6 +207,13 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .reader-body li { margin: 10px 0 10px 22px; color: #b7c2c4; }
 .reader-body blockquote { margin: 30px 0; padding: 18px 24px; border-left: 2px solid var(--blue); background: var(--panel); color: var(--muted); }
 .reader-body pre { overflow-x: auto; margin: 30px 0; padding: 22px; border: 1px solid var(--line); background: #050708; color: var(--green); font: 12px/1.75 "SFMono-Regular", Consolas, monospace; }
+.paper-summary { max-width: 860px; margin: 48px 0; padding: clamp(24px, 5vw, 48px); border: 1px solid var(--line); background: var(--panel); }
+.paper-summary h2 { margin: 10px 0 22px; font-size: clamp(28px, 4vw, 42px); }
+.paper-summary-zh, .paper-summary-original p { color: var(--muted); font-size: 17px; line-height: 1.9; }
+.paper-summary-original { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+.paper-summary-original summary { color: var(--green); cursor: pointer; }
+.paper-summary-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.paper-summary-actions a { padding: 12px 16px; border: 1px solid var(--green); color: var(--green); text-decoration: none; }
 .reader-note { margin: 44px 0; padding: 30px; border: 1px solid var(--line); background: var(--panel); }
 .reader-note h2 { margin: 0 0 12px; font-size: 22px; }
 .reader-note p:last-child { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
