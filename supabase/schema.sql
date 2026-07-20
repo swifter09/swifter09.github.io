@@ -32,6 +32,8 @@ create table if not exists public.content_items (
 alter table public.content_items add column if not exists source_id uuid references public.sources(id) on delete set null;
 alter table public.content_items add column if not exists external_id text;
 alter table public.content_items add column if not exists discovered_at timestamptz not null default now();
+alter table public.content_items add column if not exists title_zh text;
+alter table public.content_items add column if not exists summary_zh text;
 create unique index if not exists content_items_url_unique on public.content_items (url);
 create index if not exists content_items_status_created_idx on public.content_items (status, created_at desc);
 create index if not exists sources_enabled_type_idx on public.sources (enabled, source_type);

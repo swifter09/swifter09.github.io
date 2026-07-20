@@ -9,6 +9,8 @@ type PublishedItem = {
   category: Category;
   title: string;
   summary: string | null;
+  title_zh: string | null;
+  summary_zh: string | null;
   url: string;
   source: string | null;
   published_at: string;
@@ -36,7 +38,7 @@ export function PublicFeed() {
     if (!supabase) return;
     supabase
       .from("content_items")
-      .select("id,category,title,summary,url,source,published_at")
+      .select("id,category,title,summary,title_zh,summary_zh,url,source,published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data }) => {
@@ -76,8 +78,8 @@ export function PublicFeed() {
                 <span>{labels[item.category]}</span>
                 <time>{new Date(item.published_at).toLocaleDateString("zh-CN")}</time>
               </div>
-              <h3>{item.title}</h3>
-              {item.summary && <p>{item.summary}</p>}
+              <h3>{item.title_zh || item.title}</h3>
+              {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
               <div className="published-footer">
                 <span>{item.source || "字节漫游"}</span>
                 <a href={item.url} target="_blank" rel="noreferrer">阅读原文 ↗</a>

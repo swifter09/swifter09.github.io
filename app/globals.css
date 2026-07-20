@@ -167,6 +167,10 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .review-list article > div:first-child b { color: var(--green); }
 .review-list article p, .admin-muted { color: var(--muted); font-size: 12px; line-height: 1.7; }
 .review-list article > a { color: var(--blue); font-size: 11px; }
+.original-copy { margin: 12px 0; padding-left: 12px; border-left: 1px solid var(--line); color: var(--muted); }
+.original-copy summary { cursor: pointer; color: var(--blue); font-size: 11px; }
+.original-copy h4 { margin: 10px 0 4px; color: var(--text); font-size: 12px; line-height: 1.5; }
+.original-copy p { margin: 0; }
 .review-category { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--muted); font-size: 11px; }
 .review-category select { border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 7px 9px; }
 .review-actions { display: flex; gap: 8px; margin-top: 14px; }

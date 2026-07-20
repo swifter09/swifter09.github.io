@@ -10,6 +10,8 @@ type Item = {
   category: Category;
   title: string;
   summary: string | null;
+  title_zh: string | null;
+  summary_zh: string | null;
   url: string;
   source: string | null;
   status: Status;
@@ -241,8 +243,15 @@ export function AdminDashboard() {
           {items.length ? items.map((item) => (
             <article key={item.id}>
               <div><span>{item.category}</span><b>{item.status}</b></div>
-              <h3>{item.title}</h3>
-              <p>{item.summary}</p>
+              <h3>{item.title_zh || item.title}</h3>
+              {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
+              {item.title_zh && (
+                <details className="original-copy">
+                  <summary>查看英文标题与摘要</summary>
+                  <h4>{item.title}</h4>
+                  {item.summary && <p>{item.summary}</p>}
+                </details>
+              )}
               <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>
               <label className="review-category">内容分类
                 <select value={item.category} onChange={(event) => setCategory(item.id, event.target.value as Category)}>
