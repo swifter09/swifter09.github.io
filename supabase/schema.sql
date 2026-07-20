@@ -38,6 +38,9 @@ create index if not exists sources_enabled_type_idx on public.sources (enabled, 
 
 grant select, insert, update on public.sources to service_role;
 grant select, insert, update on public.content_items to service_role;
+grant select, insert, update, delete on public.sources to authenticated;
+grant select, insert, update, delete on public.content_items to authenticated;
+grant select on public.content_items to anon;
 
 alter table public.content_items enable row level security;
 alter table public.sources enable row level security;

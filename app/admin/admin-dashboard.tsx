@@ -45,13 +45,21 @@ export function AdminDashboard() {
 
   async function loadItems() {
     if (!supabase) return;
-    const { data } = await supabase.from("content_items").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("content_items").select("*").order("created_at", { ascending: false });
+    if (error) {
+      setMessage(`读取审核队列失败：${error.message}`);
+      return;
+    }
     setItems((data as Item[] | null) ?? []);
   }
 
   async function loadSources() {
     if (!supabase) return;
-    const { data } = await supabase.from("sources").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("sources").select("*").order("created_at", { ascending: false });
+    if (error) {
+      setMessage(`读取来源失败：${error.message}`);
+      return;
+    }
     setSources((data as Source[] | null) ?? []);
   }
 
