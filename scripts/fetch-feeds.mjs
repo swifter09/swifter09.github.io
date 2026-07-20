@@ -200,6 +200,12 @@ function chunkMarkdown(content, maxLength = 5_500) {
   return chunks;
 }
 
+function stripReaderMetadata(content) {
+  const lines = content.split("\n");
+  const marker = lines.findIndex((line) => line.trim() === "Markdown Content:");
+  return (marker >= 0 ? lines.slice(marker + 1) : lines).join("\n").trim();
+}
+
 async function translateMarkdownChunk(markdown) {
   const response = await fetch("https://models.github.ai/inference/chat/completions", {
     method: "POST",
@@ -243,7 +249,7 @@ async function translatePendingReaderContent() {
   let completed = 0;
   for (const item of pending) {
     try {
-      const chunks = chunkMarkdown(item.reader_content);
+      const chunks = chunkMarkdown(stripReaderMetadata(item.reader_content));
       const translated = [];
       for (const chunk of chunks) translated.push(await translateMarkdownChunk(chunk));
       await api(`content_items?id=eq.${encodeURIComponent(item.id)}`, {

@@ -40,7 +40,7 @@ test("reader renders remote Markdown images and audio instead of source labels",
   assert.match(reader, /reader-figure/);
   assert.match(reader, /<img/);
   assert.match(reader, /<audio/);
-  assert.match(reader, /Markdown Content:/);
+  assert.match(reader, /Markdown Content/);
   assert.match(reader, /sourceMetadataIndex/);
 });
 
@@ -50,4 +50,7 @@ test("reader supports persisted Chinese and English article bodies", () => {
   assert.match(reader, /中文翻译正在生成/);
   assert.match(ingest, /translatePendingReaderContent/);
   assert.match(ingest, /chunkMarkdown/);
+  assert.match(reader, /Markdown 内容/);
+  assert.match(reader, /Audio\|音频/);
+  assert.match(ingest, /stripReaderMetadata/);
 });
