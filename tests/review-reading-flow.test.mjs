@@ -25,3 +25,13 @@ test("arXiv papers use an abstract-first reader and are excluded from body extra
   assert.match(ingest, /isArxivUrl/);
   assert.match(ingest, /filter\(\(item\) => !isArxivUrl\(item\.url\)\)/);
 });
+
+test("reader removes captured page controls, preserves rich formatting, and offers narration", () => {
+  assert.match(reader, /sanitizeReaderBody/);
+  assert.match(reader, /Share\|Voice\|Speed/);
+  assert.match(reader, /renderInline/);
+  assert.match(reader, /speechSynthesis/);
+  assert.match(reader, /朗读文章/);
+  assert.match(ingest, /refreshKnownPoorReaderContent/);
+  assert.match(ingest, /r\.jina\.ai/);
+});

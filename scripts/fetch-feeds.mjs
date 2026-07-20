@@ -180,6 +180,23 @@ async function translatePendingAiItems() {
 }
 
 async function fetchReaderContent(item) {
+  const useReaderFirst = new URL(item.url).hostname.toLowerCase() === "blog.google";
+  if (useReaderFirst) {
+    const readerResponse = await fetch(`https://r.jina.ai/${item.url}`, {
+      headers: { accept: "text/plain" },
+      signal: AbortSignal.timeout(45_000),
+    });
+    if (!readerResponse.ok) throw new Error(`Reader returned ${readerResponse.status}`);
+    const content = (await readerResponse.text()).trim().slice(0, 120_000);
+    if (content.length < 400) throw new Error("Reader content is too short");
+    await api(`content_items?id=eq.${encodeURIComponent(item.id)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ reader_content: content }),
+    });
+    return content.length;
+  }
+
   let response = await fetch(item.url, {
     headers: {
       accept: "text/html,application/xhtml+xml",
@@ -216,6 +233,16 @@ async function fetchReaderContent(item) {
     body: JSON.stringify({ reader_content: content }),
   });
   return content.length;
+}
+
+async function refreshKnownPoorReaderContent() {
+  const response = await api(
+    "content_items?url=like.*blog.google*&select=id,url,title&order=created_at.desc&limit=25"
+  );
+  const items = await response.json();
+  const results = await Promise.allSettled(items.map(fetchReaderContent));
+  const completed = results.filter((result) => result.status === "fulfilled").length;
+  console.log(`Refreshed ${completed}/${items.length} Google reader copies`);
 }
 
 function isArxivUrl(url) {
@@ -291,3 +318,4 @@ for (const source of sources) {
 
 await translatePendingAiItems();
 await backfillReaderContent();
+await refreshKnownPoorReaderContent();
