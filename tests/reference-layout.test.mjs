@@ -18,6 +18,8 @@ test("content browser includes category tabs and a compact daily radar", () => {
   assert.match(feed, /radarItems/);
   assert.match(styles, /\.feed-browser \{ display: grid/);
   assert.match(styles, /\.radar-panel \{ position: sticky/);
+  assert.match(styles, /\.published-card \{ min-height: 210px; display: grid; grid-template-columns:/);
+  assert.match(feed, /published-media/);
 });
 
 test("technology directory only lists technology sources", () => {

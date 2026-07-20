@@ -157,32 +157,42 @@ export function PublicFeed() {
             const image = item.category === "project" ? projectImage(sourceRecord) : null;
             return (
             <article className={`published-card${item.category === "podcast" ? " podcast-episode" : ""}${item.category === "project" ? " project-entry" : ""}`} key={item.id}>
-              {image && <img className="project-cover" src={image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
-              <div className="published-meta">
-                <span>{labels[item.category]}</span>
-                <time>本站上线 {new Date(item.published_at || item.created_at).toLocaleDateString("zh-CN")}</time>
+              <div className={`published-media${image ? " has-image" : ""}`}>
+                {image
+                  ? <img src={image} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                  : <>
+                    <span>{labels[item.category]}</span>
+                    <b>{item.source || "字节漫游"}</b>
+                    <i aria-hidden="true">{item.category === "podcast" ? "◉" : "↗"}</i>
+                  </>}
               </div>
-              <div className="source-published-time">
-                原始发布 {new Date(item.source_published_at || item.created_at).toLocaleString("zh-CN")}
-                {!item.source_published_at && " · 来源未提供时间"}
-              </div>
-              <h3>{item.category === "project" ? item.source || item.title : item.title_zh || item.title}</h3>
-              {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
-              {item.category === "podcast" && item.audio_url && (
-                <div className="episode-player">
-                  {item.duration && <span>时长 {item.duration}</span>}
-                  <audio controls preload="none" src={item.audio_url}>
-                    你的浏览器不支持音频播放。
-                  </audio>
+              <div className="published-content">
+                <div className="published-meta">
+                  <span>{labels[item.category]}</span>
+                  <time>本站上线 {new Date(item.published_at || item.created_at).toLocaleDateString("zh-CN")}</time>
                 </div>
-              )}
-              <div className="published-footer">
-                <span>{item.source || "字节漫游"}</span>
-                {item.category === "project" && projectHref
-                  ? <a href={projectHref} target="_blank" rel="noreferrer">访问项目 ↗</a>
-                  : item.category === "podcast" && item.url
-                  ? <a href={item.url} target="_blank" rel="noreferrer">单集详情 ↗</a>
-                  : <a href={`/article/?id=${item.id}`}>站内阅读 →</a>}
+                <div className="source-published-time">
+                  原始发布 {new Date(item.source_published_at || item.created_at).toLocaleString("zh-CN")}
+                  {!item.source_published_at && " · 来源未提供时间"}
+                </div>
+                <h3>{item.category === "project" ? item.source || item.title : item.title_zh || item.title}</h3>
+                {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
+                {item.category === "podcast" && item.audio_url && (
+                  <div className="episode-player">
+                    {item.duration && <span>时长 {item.duration}</span>}
+                    <audio controls preload="none" src={item.audio_url}>
+                      你的浏览器不支持音频播放。
+                    </audio>
+                  </div>
+                )}
+                <div className="published-footer">
+                  <span>{item.source || "字节漫游"}</span>
+                  {item.category === "project" && projectHref
+                    ? <a href={projectHref} target="_blank" rel="noreferrer">访问项目 ↗</a>
+                    : item.category === "podcast" && item.url
+                    ? <a href={item.url} target="_blank" rel="noreferrer">单集详情 ↗</a>
+                    : <a href={`/article/?id=${item.id}`}>站内阅读 →</a>}
+                </div>
               </div>
             </article>
           )})}
