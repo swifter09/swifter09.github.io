@@ -180,7 +180,7 @@ async function translatePendingAiItems() {
 }
 
 async function fetchReaderContent(item) {
-  const response = await fetch(item.url, {
+  let response = await fetch(item.url, {
     headers: {
       accept: "text/html,application/xhtml+xml",
       "user-agent": "Mozilla/5.0 (compatible; ZijiManyouReader/1.0; +https://swifter09.github.io)",
@@ -188,6 +188,21 @@ async function fetchReaderContent(item) {
     redirect: "follow",
     signal: AbortSignal.timeout(25_000),
   });
+  if (response.status === 401 || response.status === 403) {
+    response = await fetch(`https://r.jina.ai/${item.url}`, {
+      headers: { accept: "text/plain" },
+      signal: AbortSignal.timeout(45_000),
+    });
+    if (!response.ok) throw new Error(`Reader fallback returned ${response.status}`);
+    const content = (await response.text()).trim().slice(0, 120_000);
+    if (content.length < 400) throw new Error("Reader fallback content is too short");
+    await api(`content_items?id=eq.${encodeURIComponent(item.id)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ reader_content: content }),
+    });
+    return content.length;
+  }
   if (!response.ok) throw new Error(`Original returned ${response.status}`);
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html") && !type.includes("application/xhtml")) {
