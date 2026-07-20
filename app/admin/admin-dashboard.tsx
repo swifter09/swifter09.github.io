@@ -42,23 +42,6 @@ export function AdminDashboard() {
     if (!supabase) { setReady(true); return; }
 
     async function restoreSession() {
-      const query = new URLSearchParams(window.location.search);
-      const authorizationCode = query.get("code");
-      const callback = new URLSearchParams(window.location.hash.slice(1));
-      const accessToken = callback.get("access_token");
-      const refreshToken = callback.get("refresh_token");
-
-      if (authorizationCode) {
-        await supabase!.auth.exchangeCodeForSession(authorizationCode);
-        window.history.replaceState(null, "", window.location.pathname);
-      } else if (accessToken && refreshToken) {
-        await supabase!.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        window.history.replaceState(null, "", window.location.pathname);
-      }
-
       const { data } = await supabase!.auth.getSession();
       setSession(data.session);
       setReady(true);
