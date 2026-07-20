@@ -25,6 +25,7 @@ type PublicSource = {
   name: string;
   source_type: string;
   category: Category;
+  feed_url: string | null;
   homepage_url: string | null;
 };
 
@@ -40,6 +41,11 @@ const labels: Record<Category | "all", string> = {
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = url && key ? createClient(url, key) : null;
+
+function projectImage(source?: PublicSource) {
+  const repository = source?.feed_url?.match(/github\.com\/([^/]+\/[^/]+)\/releases\.atom/i)?.[1];
+  return repository ? `https://opengraph.githubassets.com/ziji-manyou/${repository}` : null;
+}
 
 export function PublicFeed() {
   const [items, setItems] = useState<PublishedItem[]>([]);
@@ -60,17 +66,24 @@ export function PublicFeed() {
       });
     supabase
       .from("sources")
-      .select("id,name,source_type,category,homepage_url")
+      .select("id,name,source_type,category,feed_url,homepage_url")
       .eq("enabled", true)
       .not("homepage_url", "is", null)
       .order("name")
       .then(({ data }) => setSources((data as PublicSource[] | null) ?? []));
   }, []);
 
-  const filtered = useMemo(
-    () => active === "all" ? items : items.filter((item) => item.category === active),
-    [active, items],
-  );
+  const filtered = useMemo(() => {
+    const selected = active === "all" ? items : items.filter((item) => item.category === active);
+    const seenProjects = new Set<string>();
+    return selected.filter((item) => {
+      if (item.category !== "project") return true;
+      const projectKey = item.source || item.id;
+      if (seenProjects.has(projectKey)) return false;
+      seenProjects.add(projectKey);
+      return true;
+    });
+  }, [active, items]);
 
   return (
     <>
@@ -92,8 +105,13 @@ export function PublicFeed() {
         <div className="feed-empty"><span className="status-dot" />正在加载内容…</div>
       ) : filtered.length ? (
         <div className="published-grid">
-          {filtered.map((item) => (
-            <article className={`published-card${item.category === "podcast" ? " podcast-episode" : ""}`} key={item.id}>
+          {filtered.map((item) => {
+            const sourceRecord = sources.find((source) => source.name === item.source);
+            const projectHref = item.category === "project" ? sourceRecord?.homepage_url || item.url : null;
+            const image = item.category === "project" ? projectImage(sourceRecord) : null;
+            return (
+            <article className={`published-card${item.category === "podcast" ? " podcast-episode" : ""}${item.category === "project" ? " project-entry" : ""}`} key={item.id}>
+              {image && <img className="project-cover" src={image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
               <div className="published-meta">
                 <span>{labels[item.category]}</span>
                 <time>本站上线 {new Date(item.published_at || item.created_at).toLocaleDateString("zh-CN")}</time>
@@ -102,7 +120,7 @@ export function PublicFeed() {
                 原始发布 {new Date(item.source_published_at || item.created_at).toLocaleString("zh-CN")}
                 {!item.source_published_at && " · 来源未提供时间"}
               </div>
-              <h3>{item.title_zh || item.title}</h3>
+              <h3>{item.category === "project" ? item.source || item.title : item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
               {item.category === "podcast" && item.audio_url && (
                 <div className="episode-player">
@@ -114,12 +132,14 @@ export function PublicFeed() {
               )}
               <div className="published-footer">
                 <span>{item.source || "字节漫游"}</span>
-                {item.category === "podcast" && item.url
+                {item.category === "project" && projectHref
+                  ? <a href={projectHref} target="_blank" rel="noreferrer">访问项目 ↗</a>
+                  : item.category === "podcast" && item.url
                   ? <a href={item.url} target="_blank" rel="noreferrer">单集详情 ↗</a>
                   : <a href={`/article/?id=${item.id}`}>站内阅读 →</a>}
               </div>
             </article>
-          ))}
+          )})}
         </div>
       ) : (
         <div className="feed-empty">

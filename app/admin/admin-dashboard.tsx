@@ -66,10 +66,14 @@ function isOwner(session: Session | null) {
 }
 
 function reviewItemKey(item: Item) {
+  if (item.category === "project") return `project:${item.source || item.id}`;
   return `${item.source || ""}:${item.category}:${item.title.trim().toLocaleLowerCase().replace(/\s+/g, " ")}`;
 }
 
 const statusPriority: Record<Status, number> = { published: 0, review: 1, draft: 2 };
+function itemTimestamp(item: Item) {
+  return new Date(item.source_published_at || item.created_at).getTime();
+}
 
 export function AdminDashboard() {
   const [session, setSession] = useState<Session | null>(null);
@@ -87,7 +91,11 @@ export function AdminDashboard() {
     for (const item of items) {
       const key = reviewItemKey(item);
       const current = unique.get(key);
-      if (!current || statusPriority[item.status] < statusPriority[current.status]) unique.set(key, item);
+      if (
+        !current
+        || (item.category === "project" && itemTimestamp(item) > itemTimestamp(current))
+        || (item.category !== "project" && statusPriority[item.status] < statusPriority[current.status])
+      ) unique.set(key, item);
     }
     return [...unique.values()];
   }, [items]);
@@ -398,7 +406,7 @@ export function AdminDashboard() {
                 {!item.source_published_at && <small>来源未提供时间，显示收录时间</small>}
                 {item.published_at && <time>本站上线：{new Date(item.published_at).toLocaleString("zh-CN")}</time>}
               </div>
-              <h3>{item.title_zh || item.title}</h3>
+              <h3>{item.category === "project" ? item.source || item.title : item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
               {item.category === "podcast" && item.audio_url && (
                 <div className="admin-audio">
@@ -415,8 +423,20 @@ export function AdminDashboard() {
                   {item.summary && <p>{item.summary}</p>}
                 </details>
               )}
-              {item.url && <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>}
-              <a href={`/article/?id=${item.id}&review=1`}>阅读全文并审核 →</a>
+              {item.category === "project" ? (
+                <a
+                  href={sources.find((source) => source.name === item.source)?.homepage_url || item.url || "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  访问项目主页 ↗
+                </a>
+              ) : (
+                <>
+                  {item.url && <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>}
+                  <a href={`/article/?id=${item.id}&review=1`}>阅读全文并审核 →</a>
+                </>
+              )}
               <details className="item-editor">
                 <summary>编辑内容</summary>
                 <form className="inline-editor" onSubmit={(event) => editItem(event, item.id)}>

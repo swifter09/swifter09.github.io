@@ -138,6 +138,8 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .published-card h3 { margin: 24px 0 10px; font-size: 18px; line-height: 1.5; }
 .source-published-time { margin-top: 10px; color: var(--muted); font: 8px "SFMono-Regular", Consolas, monospace; letter-spacing: .05em; }
 .published-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.8; }
+.project-entry { overflow: hidden; }
+.project-cover { display: block; width: calc(100% + 44px); max-width: none; height: 180px; margin: -22px -22px 18px; object-fit: cover; border-bottom: 1px solid var(--line); background: var(--panel-2); }
 .podcast-episode { grid-column: span 1; }
 .episode-player, .admin-audio { display: grid; gap: 8px; margin-top: 18px; }
 .episode-player span, .admin-audio span { color: var(--muted); font: 9px "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; }

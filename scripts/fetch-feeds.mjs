@@ -73,6 +73,40 @@ function parseFeed(xml) {
   }).filter((item) => item.title && item.url);
 }
 
+function githubRepository(feedUrl = "") {
+  return feedUrl.match(/github\.com\/([^/]+)\/([^/]+)\/releases\.atom/i)?.slice(1, 3) ?? null;
+}
+
+async function githubProjectEntry(source, fallbackEntry) {
+  const repository = githubRepository(source.feed_url);
+  if (!repository) {
+    return fallbackEntry
+      ? { ...fallbackEntry, title: source.name, url: source.homepage_url || fallbackEntry.url }
+      : null;
+  }
+
+  const [owner, name] = repository;
+  const response = await fetch(`https://api.github.com/repos/${owner}/${name}`, {
+    headers: {
+      accept: "application/vnd.github+json",
+      "user-agent": "ziji-manyou-feed-fetcher/1.0",
+      ...(githubToken ? { authorization: `Bearer ${githubToken}` } : {}),
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!response.ok) throw new Error(`GitHub repository returned ${response.status}`);
+  const repositoryData = await response.json();
+  return {
+    external_id: `github-project:${repositoryData.id}`,
+    title: source.name,
+    summary: repositoryData.description || fallbackEntry?.summary || `${source.name} 项目主页`,
+    url: source.homepage_url || repositoryData.html_url,
+    source_published_at: fallbackEntry?.source_published_at || repositoryData.pushed_at || repositoryData.updated_at,
+    audio_url: null,
+    duration: null,
+  };
+}
+
 function decodeArticleText(value = "") {
   return value
     .replace(/&nbsp;|&#160;/gi, " ")
@@ -390,7 +424,7 @@ async function backfillReaderContent() {
 }
 
 const sourceResponse = await api(
-  "sources?enabled=eq.true&feed_url=not.is.null&select=id,name,source_type,category,feed_url"
+  "sources?enabled=eq.true&feed_url=not.is.null&select=id,name,source_type,category,feed_url,homepage_url"
 );
 const sources = await sourceResponse.json();
 
@@ -401,9 +435,13 @@ for (const source of sources) {
       signal: AbortSignal.timeout(20_000),
     });
     if (!response.ok) throw new Error(`Feed returned ${response.status}`);
-    const entries = parseFeed(await response.text()).filter(
+    let entries = parseFeed(await response.text()).filter(
       (entry) => source.source_type !== "podcast" || entry.audio_url
     );
+    if (source.source_type === "github") {
+      const projectEntry = await githubProjectEntry(source, entries[0]);
+      entries = projectEntry ? [projectEntry] : [];
+    }
     const payload = entries.map((entry) => ({
       ...entry,
       dedupe_key: createDedupeKey(source, entry.title),
