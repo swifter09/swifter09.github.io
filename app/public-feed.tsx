@@ -15,6 +15,8 @@ type PublishedItem = {
   url: string | null;
   source: string | null;
   published_at: string;
+  audio_url: string | null;
+  duration: string | null;
 };
 type PublicSource = {
   id: string;
@@ -47,7 +49,7 @@ export function PublicFeed() {
     if (!supabase) return;
     supabase
       .from("content_items")
-      .select("id,category,title,summary,title_zh,summary_zh,body,url,source,published_at")
+      .select("id,category,title,summary,title_zh,summary_zh,body,url,source,published_at,audio_url,duration")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data }) => {
@@ -89,16 +91,26 @@ export function PublicFeed() {
       ) : filtered.length ? (
         <div className="published-grid">
           {filtered.map((item) => (
-            <article className="published-card" key={item.id}>
+            <article className={`published-card${item.category === "podcast" ? " podcast-episode" : ""}`} key={item.id}>
               <div className="published-meta">
                 <span>{labels[item.category]}</span>
                 <time>{new Date(item.published_at).toLocaleDateString("zh-CN")}</time>
               </div>
               <h3>{item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
+              {item.category === "podcast" && item.audio_url && (
+                <div className="episode-player">
+                  {item.duration && <span>时长 {item.duration}</span>}
+                  <audio controls preload="none" src={item.audio_url}>
+                    你的浏览器不支持音频播放。
+                  </audio>
+                </div>
+              )}
               <div className="published-footer">
                 <span>{item.source || "字节漫游"}</span>
-                <a href={`/article/?id=${item.id}`}>站内阅读 →</a>
+                {item.category === "podcast" && item.url
+                  ? <a href={item.url} target="_blank" rel="noreferrer">单集详情 ↗</a>
+                  : <a href={`/article/?id=${item.id}`}>站内阅读 →</a>}
               </div>
             </article>
           ))}
@@ -128,6 +140,27 @@ export function PublicFeed() {
                 <span>{source.source_type}</span>
                 <b>{source.name}</b>
                 <i>访问来源 ↗</i>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {active === "podcast" && (
+        <section className="public-sources" aria-labelledby="podcast-directory-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">PODCAST / SUBSCRIPTIONS</p>
+              <h2 id="podcast-directory-title">持续收听的播客</h2>
+            </div>
+          </div>
+          <p className="source-intro">订阅源会定时收集新单集；只有你在后台听过并批准的内容，才会在上方出现并支持站内播放。</p>
+          <div className="public-source-grid">
+            {sources.filter((source) => source.category === "podcast").map((source) => (
+              <a key={source.id} href={source.homepage_url!} target="_blank" rel="noreferrer">
+                <span>PODCAST</span>
+                <b>{source.name}</b>
+                <i>节目主页 ↗</i>
               </a>
             ))}
           </div>

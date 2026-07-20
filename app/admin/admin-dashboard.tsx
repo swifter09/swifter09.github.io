@@ -17,6 +17,8 @@ type Item = {
   source: string | null;
   status: Status;
   created_at: string;
+  audio_url: string | null;
+  duration: string | null;
 };
 
 const categoryLabels: Record<Category, string> = {
@@ -277,6 +279,14 @@ export function AdminDashboard() {
               </div>
               <h3>{item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
+              {item.category === "podcast" && item.audio_url && (
+                <div className="admin-audio">
+                  {item.duration && <span>时长 {item.duration}</span>}
+                  <audio controls preload="none" src={item.audio_url}>
+                    你的浏览器不支持音频播放。
+                  </audio>
+                </div>
+              )}
               {item.title_zh && (
                 <details className="original-copy">
                   <summary>查看英文标题与摘要</summary>

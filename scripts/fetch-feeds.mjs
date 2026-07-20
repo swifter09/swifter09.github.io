@@ -44,12 +44,19 @@ function parseFeed(xml) {
   return (rssItems ?? atomEntries ?? []).slice(0, 10).map((block) => {
     const id = field(block, ["guid", "id"]);
     const link = field(block, ["link"]) || attr(block, "link", "href") || (id.startsWith("http") ? id : "");
+    const enclosureUrl = decodeArticleText(attr(block, "enclosure", "url"));
+    const enclosureType = attr(block, "enclosure", "type").toLowerCase();
+    const audioUrl = enclosureType.startsWith("audio/") || /\.(?:mp3|m4a|aac|ogg|wav)(?:\?|$)/i.test(enclosureUrl)
+      ? enclosureUrl
+      : null;
     return {
       external_id: id || link,
       title: field(block, ["title"]),
       summary: field(block, ["description", "summary", "content", "content:encoded"]).slice(0, 800),
       url: link,
       published_at: field(block, ["pubDate", "published", "updated"]) || null,
+      audio_url: audioUrl,
+      duration: field(block, ["itunes:duration"]) || null,
     };
   }).filter((item) => item.title && item.url);
 }
@@ -342,9 +349,11 @@ function isArxivUrl(url) {
 
 async function backfillReaderContent() {
   const response = await api(
-    "content_items?url=not.is.null&reader_content=is.null&select=id,url,title&order=created_at.asc&limit=100"
+    "content_items?url=not.is.null&reader_content=is.null&select=id,url,title,category&order=created_at.asc&limit=100"
   );
-  const pending = (await response.json()).filter((item) => !isArxivUrl(item.url));
+  const pending = (await response.json())
+    .filter((item) => !isArxivUrl(item.url))
+    .filter((item) => item.category !== "podcast");
   let completed = 0;
 
   for (let index = 0; index < pending.length; index += 5) {
@@ -375,7 +384,9 @@ for (const source of sources) {
       signal: AbortSignal.timeout(20_000),
     });
     if (!response.ok) throw new Error(`Feed returned ${response.status}`);
-    const entries = parseFeed(await response.text());
+    const entries = parseFeed(await response.text()).filter(
+      (entry) => source.source_type !== "podcast" || entry.audio_url
+    );
     const payload = entries.map((entry) => ({
       ...entry,
       source_id: source.id,

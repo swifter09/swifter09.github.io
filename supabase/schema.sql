@@ -37,6 +37,8 @@ alter table public.content_items add column if not exists summary_zh text;
 alter table public.content_items add column if not exists body text;
 alter table public.content_items add column if not exists reader_content text;
 alter table public.content_items add column if not exists reader_content_zh text;
+alter table public.content_items add column if not exists audio_url text;
+alter table public.content_items add column if not exists duration text;
 alter table public.content_items alter column url drop not null;
 create unique index if not exists content_items_url_unique on public.content_items (url);
 create index if not exists content_items_status_created_idx on public.content_items (status, created_at desc);
@@ -116,6 +118,10 @@ values
   ('Hugging Face Blog', 'rss', 'ai', 'https://huggingface.co/blog/feed.xml', 'https://huggingface.co/blog'),
   ('Google AI Blog', 'rss', 'ai', 'https://blog.google/technology/ai/rss/', 'https://blog.google/technology/ai/'),
   ('arXiv cs.AI', 'rss', 'ai', 'https://rss.arxiv.org/rss/cs.AI', 'https://arxiv.org/list/cs.AI/recent'),
+  ('罗永浩的十字路口', 'podcast', 'podcast', 'https://feed.xyzfm.space/wmnkvmrpwuww', 'https://www.xiaoyuzhoufm.com/podcast/68981df29e7bcd326eb91d88'),
+  ('硅谷101', 'podcast', 'podcast', 'https://feeds.fireside.fm/sv101/rss', 'https://sv101.fireside.fm'),
+  ('Lex Fridman Podcast', 'podcast', 'podcast', 'https://lexfridman.com/feed/podcast/', 'https://lexfridman.com/podcast/'),
+  ('Latent Space', 'podcast', 'podcast', 'https://www.latent.space/feed', 'https://www.latent.space/podcast'),
   ('美团技术团队', 'wechat', 'tech_feed', null, 'https://tech.meituan.com'),
   ('腾讯技术工程', 'wechat', 'tech_feed', null, null),
   ('阿里云开发者', 'wechat', 'tech_feed', null, null),
