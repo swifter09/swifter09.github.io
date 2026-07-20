@@ -17,7 +17,9 @@ type Item = {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey, { auth: { flowType: "pkce" } })
+  : null;
 
 function isOwner(session: Session | null) {
   const meta = session?.user.user_metadata ?? {};
@@ -40,11 +42,16 @@ export function AdminDashboard() {
     if (!supabase) { setReady(true); return; }
 
     async function restoreSession() {
+      const query = new URLSearchParams(window.location.search);
+      const authorizationCode = query.get("code");
       const callback = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = callback.get("access_token");
       const refreshToken = callback.get("refresh_token");
 
-      if (accessToken && refreshToken) {
+      if (authorizationCode) {
+        await supabase!.auth.exchangeCodeForSession(authorizationCode);
+        window.history.replaceState(null, "", window.location.pathname);
+      } else if (accessToken && refreshToken) {
         await supabase!.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
