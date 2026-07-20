@@ -37,8 +37,9 @@ function getArxivPdfUrl(url: string | null) {
 function sanitizeReaderBody(body: string) {
   const capturedControls =
     /^(Share|Voice|Speed|0\.75X|1X|1\.5X|2X|X\.COM|Facebook|LinkedIn|Mail|Copy link|Read AI-generated summary|Listen to article|\[\[duration\]\] minutes|Contributor)$/i;
-  return body
-    .split("\n")
+  const lines = body.split("\n");
+  const sourceMetadataIndex = lines.findIndex((line) => line.trim() === "Markdown Content:");
+  return (sourceMetadataIndex >= 0 ? lines.slice(sourceMetadataIndex + 1) : lines)
     .filter((line) => {
       const value = line.replace(/^[-*]\s+/, "").trim();
       return value && !capturedControls.test(value) &&
@@ -144,6 +145,26 @@ function RichBody({ body }: { body: string }) {
           code.push(line);
           return null;
         }
+        const image = line.trim().match(/^!\[([^\]]*)\]\((https?:\/\/.+)\)$/);
+        if (image) {
+          const caption = image[1].replace(/^Image\s*\d*\s*:\s*/i, "").trim();
+          return (
+            <figure className="reader-figure" key={index}>
+              <img src={image[2]} alt={caption} loading="lazy" referrerPolicy="no-referrer" />
+              {caption && <figcaption>{caption}</figcaption>}
+            </figure>
+          );
+        }
+        const audio = line.trim().match(/^\[(Audio(?:\s+\d+)?)\]\((https?:\/\/.+)\)$/i);
+        if (audio) {
+          return (
+            <figure className="reader-audio" key={index}>
+              <figcaption>原文音频</figcaption>
+              <audio controls preload="metadata" src={audio[2]}>您的浏览器不支持音频播放。</audio>
+            </figure>
+          );
+        }
+        if (/^(?:\*\s*){3,}$|^---+$/.test(line.trim())) return <hr key={index} />;
         if (line.startsWith("### ")) return <h3 key={index}>{renderInline(line.slice(4))}</h3>;
         if (line.startsWith("## ")) return <h2 key={index}>{renderInline(line.slice(3))}</h2>;
         if (line.startsWith("# ")) return <h2 key={index}>{renderInline(line.slice(2))}</h2>;

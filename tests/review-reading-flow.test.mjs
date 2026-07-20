@@ -35,3 +35,11 @@ test("reader removes captured page controls, preserves rich formatting, and offe
   assert.match(ingest, /refreshKnownPoorReaderContent/);
   assert.match(ingest, /r\.jina\.ai/);
 });
+
+test("reader renders remote Markdown images and audio instead of source labels", () => {
+  assert.match(reader, /reader-figure/);
+  assert.match(reader, /<img/);
+  assert.match(reader, /<audio/);
+  assert.match(reader, /Markdown Content:/);
+  assert.match(reader, /sourceMetadataIndex/);
+});
