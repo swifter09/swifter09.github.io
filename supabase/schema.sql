@@ -100,9 +100,13 @@ using (public.is_blog_admin());
 
 insert into public.sources (name, source_type, category, feed_url, homepage_url)
 values
-  ('GitHub Blog', 'rss', 'article', 'https://github.com/blog.atom', 'https://github.blog'),
+  ('GitHub Blog', 'rss', 'article', 'https://github.blog/feed/', 'https://github.blog'),
   ('美团技术团队', 'wechat', 'tech_feed', null, 'https://tech.meituan.com'),
   ('腾讯技术工程', 'wechat', 'tech_feed', null, null),
   ('阿里云开发者', 'wechat', 'tech_feed', null, null),
   ('字节跳动技术团队', 'wechat', 'tech_feed', null, null)
 on conflict (name, source_type) do nothing;
+
+update public.sources
+set feed_url = 'https://github.blog/feed/'
+where name = 'GitHub Blog' and source_type = 'rss';
