@@ -12,6 +12,7 @@ type Article = {
   summary_zh: string | null;
   body: string | null;
   reader_content: string | null;
+  reader_content_zh: string | null;
   url: string | null;
   source: string | null;
   status: "draft" | "review" | "published";
@@ -183,6 +184,7 @@ export function ArticleReader() {
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
   const [message, setMessage] = useState("");
+  const [language, setLanguage] = useState<"zh" | "en">("en");
 
   const isOwner = (current: Session | null) => {
     const meta = current?.user.user_metadata ?? {};
@@ -206,10 +208,11 @@ export function ArticleReader() {
       setSession(authData.session);
       const { data } = await supabase
         .from("content_items")
-        .select("id,category,title,title_zh,summary,summary_zh,body,reader_content,url,source,status,published_at,created_at")
+        .select("id,category,title,title_zh,summary,summary_zh,body,reader_content,reader_content_zh,url,source,status,published_at,created_at")
         .eq("id", id)
         .maybeSingle();
       setArticle((data as Article | null) ?? null);
+      if (data?.reader_content_zh) setLanguage("zh");
       setMissing(!data);
       setLoading(false);
     };
@@ -265,13 +268,17 @@ export function ArticleReader() {
     );
   }
 
-  const title = article.title_zh || article.title;
-  const summary = article.summary_zh || article.summary;
+  const title = language === "zh" ? article.title_zh || article.title : article.title;
+  const summary = language === "zh" ? article.summary_zh || article.summary : article.summary;
   const isArxiv = isArxivArticle(article);
   const arxivPdfUrl = isArxiv ? getArxivPdfUrl(article.url) : null;
   const originalAbstract =
     isArxiv && article.summary && article.summary !== article.summary_zh ? article.summary : null;
-  const readableBody = sanitizeReaderBody(article.body || article.reader_content || "");
+  const originalBody = article.body || article.reader_content || "";
+  const readableBody = sanitizeReaderBody(
+    language === "zh" && article.reader_content_zh ? article.reader_content_zh : originalBody
+  );
+  const canTranslate = Boolean(article.reader_content && article.title_zh);
 
   return (
     <main className="reader-shell">
@@ -289,6 +296,28 @@ export function ArticleReader() {
           <span>{article.category === "article" ? "技术文章" : "学习精选"}</span>
           <span>{article.status.toUpperCase()}</span>
         </div>
+        {canTranslate && (
+          <nav className="language-switcher" aria-label="文章语言">
+            <span>阅读语言</span>
+            <button
+              type="button"
+              className={language === "zh" ? "active" : ""}
+              onClick={() => setLanguage("zh")}
+              disabled={!article.reader_content_zh}
+              title={article.reader_content_zh ? "切换到中文" : "中文翻译正在生成"}
+            >
+              中文
+            </button>
+            <button
+              type="button"
+              className={language === "en" ? "active" : ""}
+              onClick={() => setLanguage("en")}
+            >
+              EN
+            </button>
+            {!article.reader_content_zh && <small>中文翻译正在生成</small>}
+          </nav>
+        )}
         <h1>{title}</h1>
         <div className="reader-meta">
           <span>{article.source || "字节漫游"}</span>

@@ -36,6 +36,7 @@ alter table public.content_items add column if not exists title_zh text;
 alter table public.content_items add column if not exists summary_zh text;
 alter table public.content_items add column if not exists body text;
 alter table public.content_items add column if not exists reader_content text;
+alter table public.content_items add column if not exists reader_content_zh text;
 alter table public.content_items alter column url drop not null;
 create unique index if not exists content_items_url_unique on public.content_items (url);
 create index if not exists content_items_status_created_idx on public.content_items (status, created_at desc);

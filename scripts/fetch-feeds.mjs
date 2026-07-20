@@ -179,6 +179,80 @@ async function translatePendingAiItems() {
   console.log(`Translated ${translated}/${pending.length} pending AI items`);
 }
 
+function chunkMarkdown(content, maxLength = 5_500) {
+  const blocks = content.split(/\n{2,}/);
+  const chunks = [];
+  let current = "";
+  for (const block of blocks) {
+    if (current && current.length + block.length + 2 > maxLength) {
+      chunks.push(current);
+      current = "";
+    }
+    if (block.length > maxLength) {
+      if (current) chunks.push(current);
+      for (let index = 0; index < block.length; index += maxLength) chunks.push(block.slice(index, index + maxLength));
+      current = "";
+    } else {
+      current += `${current ? "\n\n" : ""}${block}`;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+async function translateMarkdownChunk(markdown) {
+  const response = await fetch("https://models.github.ai/inference/chat/completions", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${githubToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-4o",
+      temperature: 0.1,
+      messages: [
+        {
+          role: "system",
+          content: "你是严谨的技术文章翻译。把 Markdown 正文完整翻译成简体中文。保留标题层级、列表、引用、代码块、行内代码、链接地址、图片地址和音频地址；只翻译可读文字。不要摘要、删减、解释或添加内容，只返回翻译后的 Markdown。",
+        },
+        { role: "user", content: markdown },
+      ],
+    }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!response.ok) throw new Error(`Body translation returned ${response.status}: ${await response.text()}`);
+  const result = await response.json();
+  const translated = result.choices?.[0]?.message?.content?.trim();
+  if (!translated) throw new Error("Body translation returned no content");
+  return translated;
+}
+
+async function translatePendingReaderContent() {
+  if (!githubToken) return;
+  const response = await api(
+    "content_items?category=eq.ai&reader_content=not.is.null&reader_content_zh=is.null&select=id,title,reader_content&order=created_at.desc&limit=8"
+  );
+  const pending = await response.json();
+  let completed = 0;
+  for (const item of pending) {
+    try {
+      const chunks = chunkMarkdown(item.reader_content);
+      const translated = [];
+      for (const chunk of chunks) translated.push(await translateMarkdownChunk(chunk));
+      await api(`content_items?id=eq.${encodeURIComponent(item.id)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ reader_content_zh: translated.join("\n\n") }),
+      });
+      completed += 1;
+      console.log(`${item.title}: translated reader copy in ${chunks.length} chunks`);
+    } catch (error) {
+      console.error(`${item.title}: reader translation failed: ${error.message}`);
+    }
+  }
+  console.log(`Translated ${completed}/${pending.length} reader copies`);
+}
+
 async function fetchReaderContent(item) {
   const useReaderFirst = new URL(item.url).hostname.toLowerCase() === "blog.google";
   if (useReaderFirst) {
@@ -319,3 +393,4 @@ for (const source of sources) {
 await translatePendingAiItems();
 await backfillReaderContent();
 await refreshKnownPoorReaderContent();
+await translatePendingReaderContent();
