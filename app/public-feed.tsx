@@ -98,18 +98,8 @@ export function PublicFeed() {
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
               <div className="published-footer">
                 <span>{item.source || "字节漫游"}</span>
-                {item.url ? (
-                  <a href={item.url} target="_blank" rel="noreferrer">阅读原文 ↗</a>
-                ) : item.body ? (
-                  <span>站内学习笔记</span>
-                ) : null}
+                <a href={`/article/?id=${item.id}`}>站内阅读 →</a>
               </div>
-              {item.body && (
-                <details className="article-body">
-                  <summary>展开阅读</summary>
-                  <div>{item.body}</div>
-                </details>
-              )}
             </article>
           ))}
         </div>
