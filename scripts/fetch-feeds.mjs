@@ -77,6 +77,10 @@ function githubRepository(feedUrl = "") {
   return feedUrl.match(/github\.com\/([^/]+)\/([^/]+)\/releases\.atom/i)?.slice(1, 3) ?? null;
 }
 
+const projectSummaries = {
+  "swifter09/devisland": "一款纯 Swift 的 macOS 动态岛应用，把 Claude Code、Codex 等 AI 编程会话的权限批准和提问聚合到屏幕顶部，支持直接就地作答。",
+};
+
 async function githubProjectEntry(source, fallbackEntry) {
   const repository = githubRepository(source.feed_url);
   if (!repository) {
@@ -99,7 +103,10 @@ async function githubProjectEntry(source, fallbackEntry) {
   return {
     external_id: `github-project:${repositoryData.id}`,
     title: source.name,
-    summary: repositoryData.description || fallbackEntry?.summary || `${source.name} 项目主页`,
+    summary: repositoryData.description
+      || projectSummaries[`${owner}/${name}`.toLowerCase()]
+      || fallbackEntry?.summary
+      || `${source.name} 项目主页`,
     url: source.homepage_url || repositoryData.html_url,
     source_published_at: fallbackEntry?.source_published_at || repositoryData.pushed_at || repositoryData.updated_at,
     audio_url: null,

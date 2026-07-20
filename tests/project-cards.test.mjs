@@ -23,4 +23,5 @@ test("GitHub ingestion creates one project-level candidate from repository metad
   assert.match(fetcher, /async function githubProjectEntry/);
   assert.match(fetcher, /entries = projectEntry \? \[projectEntry\] : \[\]/);
   assert.match(fetcher, /repositoryData\.description/);
+  assert.match(fetcher, /swifter09\/devisland/);
 });

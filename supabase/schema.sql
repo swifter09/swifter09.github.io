@@ -166,6 +166,7 @@ values
   ('Latent Space', 'podcast', 'podcast', 'https://www.latent.space/feed', 'https://www.latent.space/podcast'),
   ('CC Switch', 'github', 'project', 'https://github.com/farion1231/cc-switch/releases.atom', 'https://github.com/farion1231/cc-switch'),
   ('Agent Island', 'github', 'project', 'https://github.com/tristan666666/agent-island/releases.atom', 'https://agent-island.dev/'),
+  ('DevIsland', 'github', 'project', 'https://github.com/swifter09/DevIsland/releases.atom', 'https://github.com/swifter09/DevIsland'),
   ('OpenAI Codex', 'github', 'project', 'https://github.com/openai/codex/releases.atom', 'https://github.com/openai/codex'),
   ('Claude Code', 'github', 'project', 'https://github.com/anthropics/claude-code/releases.atom', 'https://github.com/anthropics/claude-code'),
   ('OpenHands', 'github', 'project', 'https://github.com/OpenHands/OpenHands/releases.atom', 'https://github.com/OpenHands/OpenHands'),

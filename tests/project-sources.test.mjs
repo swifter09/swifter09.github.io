@@ -8,6 +8,7 @@ test("curated AI project sources use official GitHub release feeds", () => {
   for (const project of [
     "CC Switch",
     "Agent Island",
+    "DevIsland",
     "OpenAI Codex",
     "Claude Code",
     "OpenHands",
@@ -17,5 +18,5 @@ test("curated AI project sources use official GitHub release feeds", () => {
   ]) {
     assert.ok(schema.includes(`('${project}', 'github', 'project'`));
   }
-  assert.equal((schema.match(/releases\.atom/g) || []).length, 8);
+  assert.equal((schema.match(/releases\.atom/g) || []).length, 9);
 });
