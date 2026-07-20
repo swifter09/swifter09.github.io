@@ -54,6 +54,52 @@ function parseFeed(xml) {
   }).filter((item) => item.title && item.url);
 }
 
+function decodeArticleText(value = "") {
+  return value
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;|&#34;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(parseInt(code, 16)));
+}
+
+function plainText(html = "") {
+  return decodeArticleText(html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+}
+
+function extractArticleBody(html) {
+  const cleaned = html
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<(script|style|svg|noscript|nav|footer|aside|form)[^>]*>[\s\S]*?<\/\1>/gi, "");
+  const candidates = [
+    cleaned.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1],
+    cleaned.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1],
+    cleaned.match(/<div\b[^>]*class=["'][^"']*(?:article|post|entry)[-_ ]*(?:content|body)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1],
+    cleaned.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1],
+  ].filter(Boolean);
+  const source = candidates.find((candidate) => plainText(candidate).length >= 400) || candidates[0] || "";
+  const markdown = source
+    .replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_match, code) => `\n\n\`\`\`\n${plainText(code)}\n\`\`\`\n\n`)
+    .replace(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi, (_match, text) => `\n\n# ${plainText(text)}\n\n`)
+    .replace(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi, (_match, text) => `\n\n## ${plainText(text)}\n\n`)
+    .replace(/<h[3-6]\b[^>]*>([\s\S]*?)<\/h[3-6]>/gi, (_match, text) => `\n\n### ${plainText(text)}\n\n`)
+    .replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, (_match, text) => `\n- ${plainText(text)}`)
+    .replace(/<blockquote\b[^>]*>([\s\S]*?)<\/blockquote>/gi, (_match, text) => `\n\n> ${plainText(text)}\n\n`)
+    .replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, (_match, text) => `\n\n${plainText(text)}\n\n`)
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+  return decodeArticleText(markdown)
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 120_000);
+}
+
 async function api(path, options = {}) {
   const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
     ...options,
@@ -133,6 +179,53 @@ async function translatePendingAiItems() {
   console.log(`Translated ${translated}/${pending.length} pending AI items`);
 }
 
+async function fetchReaderContent(item) {
+  const response = await fetch(item.url, {
+    headers: {
+      accept: "text/html,application/xhtml+xml",
+      "user-agent": "Mozilla/5.0 (compatible; ZijiManyouReader/1.0; +https://swifter09.github.io)",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(25_000),
+  });
+  if (!response.ok) throw new Error(`Original returned ${response.status}`);
+  const type = response.headers.get("content-type") || "";
+  if (!type.includes("text/html") && !type.includes("application/xhtml")) {
+    throw new Error(`Unsupported content type: ${type}`);
+  }
+  const content = extractArticleBody(await response.text());
+  if (content.length < 400) throw new Error("Extracted content is too short");
+  await api(`content_items?id=eq.${encodeURIComponent(item.id)}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ reader_content: content }),
+  });
+  return content.length;
+}
+
+async function backfillReaderContent() {
+  const response = await api(
+    "content_items?url=not.is.null&reader_content=is.null&select=id,url,title&order=created_at.asc&limit=100"
+  );
+  const pending = await response.json();
+  let completed = 0;
+
+  for (let index = 0; index < pending.length; index += 5) {
+    const batch = pending.slice(index, index + 5);
+    const results = await Promise.allSettled(batch.map(fetchReaderContent));
+    results.forEach((result, offset) => {
+      const item = batch[offset];
+      if (result.status === "fulfilled") {
+        completed += 1;
+        console.log(`${item.title}: reader copy ${result.value} chars`);
+      } else {
+        console.error(`${item.title}: reader copy failed: ${result.reason.message}`);
+      }
+    });
+  }
+  console.log(`Created ${completed}/${pending.length} pending reader copies`);
+}
+
 const sourceResponse = await api(
   "sources?enabled=eq.true&feed_url=not.is.null&select=id,name,source_type,category,feed_url"
 );
@@ -174,3 +267,4 @@ for (const source of sources) {
 }
 
 await translatePendingAiItems();
+await backfillReaderContent();

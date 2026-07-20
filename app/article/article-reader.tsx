@@ -11,6 +11,7 @@ type Article = {
   summary: string | null;
   summary_zh: string | null;
   body: string | null;
+  reader_content: string | null;
   url: string | null;
   source: string | null;
   status: "draft" | "review" | "published";
@@ -84,7 +85,7 @@ export function ArticleReader() {
       setSession(authData.session);
       const { data } = await supabase
         .from("content_items")
-        .select("id,category,title,title_zh,summary,summary_zh,body,url,source,status,published_at,created_at")
+        .select("id,category,title,title_zh,summary,summary_zh,body,reader_content,url,source,status,published_at,created_at")
         .eq("id", id)
         .maybeSingle();
       setArticle((data as Article | null) ?? null);
@@ -171,24 +172,19 @@ export function ArticleReader() {
 
         {summary && <p className="reader-lead">{summary}</p>}
 
-        {article.url ? (
+        {article.body || article.reader_content ? (
+          <RichBody body={article.body || article.reader_content || ""} />
+        ) : article.url ? (
           <section className="original-reader">
             <div className="original-reader-head">
               <div>
-                <p className="eyebrow">ORIGINAL / READING</p>
-                <h2>原文内容</h2>
+                <p className="eyebrow">READER / UNAVAILABLE</p>
+                <h2>阅读版正文尚未生成</h2>
               </div>
               <a href={article.url} target="_blank" rel="noreferrer">新窗口打开 ↗</a>
             </div>
-            <iframe
-              src={article.url}
-              title="原文内容"
-              loading="eager"
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
+            <p className="reader-extracting">采集任务正在处理这篇原文。稍后刷新页面，正文会直接显示在这里。</p>
           </section>
-        ) : article.body ? (
-          <RichBody body={article.body} />
         ) : (
           <p className="reader-empty-body">这篇内容暂时没有正文。</p>
         )}
@@ -197,7 +193,7 @@ export function ArticleReader() {
           <div>
             <p className="eyebrow">SOURCE / ATTRIBUTION</p>
             <h2>继续阅读</h2>
-            <p>原文通过发布方页面直接展示，内容及版权归原作者和发布方所有。</p>
+            <p>本站提供便于审核的阅读版正文；内容及版权归原作者和发布方所有。</p>
           </div>
           {article.url && (
             <a href={article.url} target="_blank" rel="noreferrer">

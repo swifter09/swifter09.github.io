@@ -215,7 +215,7 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .original-reader-head .eyebrow { margin-bottom: 6px; }
 .original-reader-head h2 { margin: 0; font-size: 20px; }
 .original-reader-head a { color: var(--blue); font-size: 11px; }
-.original-reader iframe { display: block; width: 100%; height: 76vh; min-height: 680px; border: 0; background: #fff; }
+.reader-extracting { margin: 0; padding: 34px 22px; color: var(--muted); font-size: 13px; line-height: 1.8; }
 .reader-empty-body { padding: 28px; border: 1px solid var(--line); color: var(--muted); }
 .reader-source { min-height: 0; margin-top: 72px; padding: 30px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 32px; color: inherit; font-size: inherit; }
 .reader-source h2 { margin: 0 0 10px; font-size: 24px; }
@@ -287,7 +287,6 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
   .reader-source { grid-template-columns: 1fr; }
   .reader-source > a { justify-self: start; }
   .original-reader { width: calc(100vw - 40px); }
-  .original-reader iframe { min-height: 560px; }
   .reader-review-bar { position: static; align-items: stretch; flex-direction: column; }
   .reader-review-actions { flex-wrap: wrap; }
 }

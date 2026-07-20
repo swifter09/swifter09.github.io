@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const reader = readFileSync(new URL("../app/article/article-reader.tsx", import.meta.url), "utf8");
+const ingest = readFileSync(new URL("../scripts/fetch-feeds.mjs", import.meta.url), "utf8");
 
-test("article reader embeds the canonical original instead of a note placeholder", () => {
-  assert.match(reader, /<iframe/);
-  assert.match(reader, /title="原文内容"/);
+test("ingestion creates and reader renders a full reading copy", () => {
+  assert.match(ingest, /extractArticleBody/);
+  assert.match(ingest, /reader_content/);
+  assert.match(reader, /reader_content/);
+  assert.doesNotMatch(reader, /<iframe/);
   assert.doesNotMatch(reader, /等待补充学习笔记/);
 });
 
