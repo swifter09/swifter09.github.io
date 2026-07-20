@@ -21,6 +21,13 @@ test("approved podcast episodes play in public and review views", () => {
   assert.match(feed, /持续收听的播客/);
 });
 
+test("English podcast titles and summaries are translated for review", () => {
+  assert.match(ingest, /category=eq\.podcast&title_zh=is\.null/);
+  assert.match(ingest, /pending AI and podcast items/);
+  assert.match(admin, /item\.title_zh \|\| item\.title/);
+  assert.match(admin, /查看英文标题与摘要/);
+});
+
 test("the starter podcast directory includes Chinese and international AI shows", () => {
   assert.match(schema, /罗永浩的十字路口/);
   assert.match(schema, /硅谷101/);

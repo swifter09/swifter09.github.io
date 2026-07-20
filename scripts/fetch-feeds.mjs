@@ -16,11 +16,14 @@ function decode(value = "") {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(parseInt(code, 16)))
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -132,7 +135,7 @@ async function translateBatch(items) {
       messages: [
         {
           role: "system",
-          content: "你是严谨的技术编辑。把英文 AI 技术内容翻译成简洁、自然、准确的简体中文。保留产品名、模型名、代码名和专有名词。不要扩写或添加观点。只返回 JSON。",
+          content: "你是严谨的技术编辑。把英文 AI 技术内容或播客单集信息翻译成简洁、自然、准确的简体中文。保留人名、产品名、模型名、代码名和专有名词；播客期数与节目名必须保留。不要扩写或添加观点。只返回 JSON。",
         },
         {
           role: "user",
@@ -152,15 +155,20 @@ async function translateBatch(items) {
   return JSON.parse(content).translations ?? [];
 }
 
-async function translatePendingAiItems() {
+async function translatePendingItems() {
   if (!githubToken) {
     console.log("Translation skipped: GITHUB_TOKEN is unavailable");
     return;
   }
-  const response = await api(
-    "content_items?category=eq.ai&title_zh=is.null&select=id,title,summary&order=created_at.asc&limit=100"
+  const podcastResponse = await api(
+    "content_items?category=eq.podcast&title_zh=is.null&select=id,title,summary,category&order=created_at.asc&limit=100"
   );
-  const pending = await response.json();
+  const aiResponse = await api(
+    "content_items?category=eq.ai&title_zh=is.null&select=id,title,summary,category&order=created_at.asc&limit=100"
+  );
+  const pending = [...await podcastResponse.json(), ...await aiResponse.json()].filter((item) =>
+    item.category === "ai" || /[A-Za-z]{4}/.test(`${item.title} ${item.summary || ""}`)
+  );
   let translated = 0;
 
   for (let index = 0; index < pending.length; index += 8) {
@@ -183,7 +191,7 @@ async function translatePendingAiItems() {
       console.error(`Translation batch failed: ${error.message}`);
     }
   }
-  console.log(`Translated ${translated}/${pending.length} pending AI items`);
+  console.log(`Translated ${translated}/${pending.length} pending AI and podcast items`);
 }
 
 function chunkMarkdown(content, maxLength = 5_500) {
@@ -414,7 +422,7 @@ for (const source of sources) {
   }
 }
 
-await translatePendingAiItems();
+await translatePendingItems();
 await backfillReaderContent();
 await refreshKnownPoorReaderContent();
 await translatePendingReaderContent();
