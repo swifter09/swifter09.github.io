@@ -4,15 +4,24 @@ import { FormEvent, useEffect, useState } from "react";
 import { createClient, Session } from "@supabase/supabase-js";
 
 type Status = "draft" | "review" | "published";
+type Category = "ai" | "article" | "podcast" | "project" | "tech_feed";
 type Item = {
   id: string;
-  category: string;
+  category: Category;
   title: string;
   summary: string | null;
   url: string;
   source: string | null;
   status: Status;
   created_at: string;
+};
+
+const categoryLabels: Record<Category, string> = {
+  ai: "AI 新闻",
+  article: "技术文章",
+  podcast: "播客",
+  project: "项目",
+  tech_feed: "技术号",
 };
 type Source = {
   id: string;
@@ -156,6 +165,13 @@ export function AdminDashboard() {
     if (!error) await loadItems();
   }
 
+  async function setCategory(id: string, category: Category) {
+    if (!supabase) return;
+    const { error } = await supabase.from("content_items").update({ category }).eq("id", id);
+    setMessage(error ? error.message : `分类已更新为：${categoryLabels[category]}`);
+    if (!error) await loadItems();
+  }
+
   if (!ready) return <main className="admin-shell"><p>正在验证身份…</p></main>;
 
   if (!supabase) {
@@ -228,6 +244,13 @@ export function AdminDashboard() {
               <h3>{item.title}</h3>
               <p>{item.summary}</p>
               <a href={item.url} target="_blank" rel="noreferrer">检查原文 ↗</a>
+              <label className="review-category">内容分类
+                <select value={item.category} onChange={(event) => setCategory(item.id, event.target.value as Category)}>
+                  {(Object.keys(categoryLabels) as Category[]).map((category) => (
+                    <option key={category} value={category}>{categoryLabels[category]}</option>
+                  ))}
+                </select>
+              </label>
               <div className="review-actions">
                 <button type="button" onClick={() => setStatus(item.id, "draft")}>草稿</button>
                 <button type="button" onClick={() => setStatus(item.id, "review")}>待审核</button>

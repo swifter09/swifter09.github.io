@@ -167,6 +167,8 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .review-list article > div:first-child b { color: var(--green); }
 .review-list article p, .admin-muted { color: var(--muted); font-size: 12px; line-height: 1.7; }
 .review-list article > a { color: var(--blue); font-size: 11px; }
+.review-category { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--muted); font-size: 11px; }
+.review-category select { border: 1px solid var(--line); background: var(--bg); color: var(--text); padding: 7px 9px; }
 .review-actions { display: flex; gap: 8px; margin-top: 14px; }
 .review-actions .approve { border-color: var(--green); color: var(--green); }
 .sources-admin { display: grid; grid-template-columns: .9fr 1.1fr; gap: 26px; padding-top: 26px; }
