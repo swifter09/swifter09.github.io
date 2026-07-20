@@ -57,7 +57,7 @@ function parseFeed(xml) {
       title: field(block, ["title"]),
       summary: field(block, ["description", "summary", "content", "content:encoded"]).slice(0, 800),
       url: link,
-      published_at: field(block, ["pubDate", "published", "updated"]) || null,
+      source_published_at: field(block, ["pubDate", "published", "updated"]) || null,
       audio_url: audioUrl,
       duration: field(block, ["itunes:duration"]) || null,
     };

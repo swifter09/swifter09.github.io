@@ -14,7 +14,9 @@ type PublishedItem = {
   body: string | null;
   url: string | null;
   source: string | null;
-  published_at: string;
+  published_at: string | null;
+  source_published_at: string | null;
+  created_at: string;
   audio_url: string | null;
   duration: string | null;
 };
@@ -49,7 +51,7 @@ export function PublicFeed() {
     if (!supabase) return;
     supabase
       .from("content_items")
-      .select("id,category,title,summary,title_zh,summary_zh,body,url,source,published_at,audio_url,duration")
+      .select("id,category,title,summary,title_zh,summary_zh,body,url,source,published_at,source_published_at,created_at,audio_url,duration")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data }) => {
@@ -94,7 +96,11 @@ export function PublicFeed() {
             <article className={`published-card${item.category === "podcast" ? " podcast-episode" : ""}`} key={item.id}>
               <div className="published-meta">
                 <span>{labels[item.category]}</span>
-                <time>{new Date(item.published_at).toLocaleDateString("zh-CN")}</time>
+                <time>本站上线 {new Date(item.published_at || item.created_at).toLocaleDateString("zh-CN")}</time>
+              </div>
+              <div className="source-published-time">
+                原始发布 {new Date(item.source_published_at || item.created_at).toLocaleString("zh-CN")}
+                {!item.source_published_at && " · 来源未提供时间"}
               </div>
               <h3>{item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}

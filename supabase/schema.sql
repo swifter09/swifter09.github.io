@@ -39,10 +39,17 @@ alter table public.content_items add column if not exists reader_content text;
 alter table public.content_items add column if not exists reader_content_zh text;
 alter table public.content_items add column if not exists audio_url text;
 alter table public.content_items add column if not exists duration text;
+alter table public.content_items add column if not exists source_published_at timestamptz;
 alter table public.content_items alter column url drop not null;
 create unique index if not exists content_items_url_unique on public.content_items (url);
 create index if not exists content_items_status_created_idx on public.content_items (status, created_at desc);
 create index if not exists sources_enabled_type_idx on public.sources (enabled, source_type);
+
+update public.content_items
+set source_published_at = published_at
+where source_published_at is null
+  and status in ('draft', 'review')
+  and published_at is not null;
 
 grant select, insert, update on public.sources to service_role;
 grant select, insert, update on public.content_items to service_role;

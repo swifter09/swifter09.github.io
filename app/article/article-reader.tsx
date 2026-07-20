@@ -17,6 +17,7 @@ type Article = {
   source: string | null;
   status: "draft" | "review" | "published";
   published_at: string | null;
+  source_published_at: string | null;
   created_at: string;
 };
 
@@ -211,7 +212,7 @@ export function ArticleReader() {
       setSession(authData.session);
       const { data } = await supabase
         .from("content_items")
-        .select("id,category,title,title_zh,summary,summary_zh,body,reader_content,reader_content_zh,url,source,status,published_at,created_at")
+        .select("id,category,title,title_zh,summary,summary_zh,body,reader_content,reader_content_zh,url,source,status,published_at,source_published_at,created_at")
         .eq("id", id)
         .maybeSingle();
       setArticle((data as Article | null) ?? null);
@@ -324,7 +325,8 @@ export function ArticleReader() {
         <h1>{title}</h1>
         <div className="reader-meta">
           <span>{article.source || "字节漫游"}</span>
-          <time>{new Date(article.published_at || article.created_at).toLocaleDateString("zh-CN")}</time>
+          <time>原始发布 {new Date(article.source_published_at || article.created_at).toLocaleString("zh-CN")}</time>
+          {article.published_at && <time>本站上线 {new Date(article.published_at).toLocaleString("zh-CN")}</time>}
           <span>{article.status === "published" ? "由作者审核发布" : "仅作者可见"}</span>
         </div>
 

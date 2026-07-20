@@ -17,6 +17,8 @@ type Item = {
   source: string | null;
   status: Status;
   created_at: string;
+  published_at: string | null;
+  source_published_at: string | null;
   audio_url: string | null;
   duration: string | null;
 };
@@ -375,6 +377,11 @@ export function AdminDashboard() {
                 ) : (
                   <b>{item.source || "未标明来源"}</b>
                 )}
+              </div>
+              <div className="review-dates">
+                <time>来源发布：{new Date(item.source_published_at || item.created_at).toLocaleString("zh-CN")}</time>
+                {!item.source_published_at && <small>来源未提供时间，显示收录时间</small>}
+                {item.published_at && <time>本站上线：{new Date(item.published_at).toLocaleString("zh-CN")}</time>}
               </div>
               <h3>{item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
