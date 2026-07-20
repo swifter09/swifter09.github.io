@@ -19,20 +19,22 @@ export default function Home() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
+          <span className="hero-terminal">&gt;_</span>
           <p className="eyebrow"><span>PERSONAL</span> / TECH INTELLIGENCE</p>
-          <h1>把技术世界，<br />收进一个清醒的日常。</h1>
+          <h1>字节漫游</h1>
           <p className="hero-lede">
-            这是我的个人学习场景：收集技术信号，阅读后审核，再把真正值得回看的文章、播客、项目与 AI 动态整理成精选。
+            把技术世界，收进一个清醒的日常。
           </p>
+          <p className="hero-note">阅读、审核与整理真正值得回看的 AI 动态、技术文章、播客和开源项目。</p>
         </div>
       </section>
 
       <section id="feed" className="feed-section">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">CURATED / SIGNALS</p>
-            <h2>技术信号</h2>
-            <p className="section-description">“技术文章”是我阅读并审核通过的学习精选；来自抓取和 Codex 对话的内容默认仅在后台保存，批准后才会公开。</p>
+            <p className="eyebrow">CURATED / KNOWLEDGE BASE</p>
+            <h2>我的技术信息流</h2>
+            <p className="section-description">所有公开内容均由我阅读并审核；抓取内容和 Codex 对话默认只进入私有后台。</p>
           </div>
         </div>
         <PublicFeed />

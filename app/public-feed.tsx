@@ -51,6 +51,7 @@ export function PublicFeed() {
   const [items, setItems] = useState<PublishedItem[]>([]);
   const [sources, setSources] = useState<PublicSource[]>([]);
   const [active, setActive] = useState<Category | "all">("all");
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(Boolean(supabase));
 
   useEffect(() => {
@@ -74,7 +75,11 @@ export function PublicFeed() {
   }, []);
 
   const filtered = useMemo(() => {
-    const selected = active === "all" ? items : items.filter((item) => item.category === active);
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    const selected = (active === "all" ? items : items.filter((item) => item.category === active))
+      .filter((item) => !normalizedQuery || [
+        item.title, item.title_zh, item.summary, item.summary_zh, item.source,
+      ].some((value) => value?.toLocaleLowerCase().includes(normalizedQuery)));
     const seenProjects = new Set<string>();
     return selected.filter((item) => {
       if (item.category !== "project") return true;
@@ -83,10 +88,26 @@ export function PublicFeed() {
       seenProjects.add(projectKey);
       return true;
     });
-  }, [active, items]);
+  }, [active, items, query]);
+
+  const radarItems = useMemo(
+    () => items.filter((item) => item.category === "ai" || item.category === "article").slice(0, 5),
+    [items],
+  );
 
   return (
     <>
+      <label className="feed-search">
+        <span aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="搜索标题、摘要或来源..."
+          aria-label="搜索公开内容"
+        />
+        {query && <button type="button" onClick={() => setQuery("")}>清除</button>}
+      </label>
       <div className="feed-filters" aria-label="内容分类">
         {(Object.keys(labels) as Array<Category | "all">).map((category) => (
           <button
@@ -104,7 +125,13 @@ export function PublicFeed() {
       {loading ? (
         <div className="feed-empty"><span className="status-dot" />正在加载内容…</div>
       ) : filtered.length ? (
-        <div className="published-grid">
+        <div className="feed-browser">
+          <div className="feed-primary">
+            <div className="feed-result-meta">
+              <span>{labels[active]}</span>
+              <b>{filtered.length} 条精选</b>
+            </div>
+            <div className="published-grid">
           {filtered.map((item) => {
             const sourceRecord = sources.find((source) => source.name === item.source);
             const projectHref = item.category === "project" ? sourceRecord?.homepage_url || item.url : null;
@@ -140,6 +167,26 @@ export function PublicFeed() {
               </div>
             </article>
           )})}
+            </div>
+          </div>
+          <aside className="radar-panel">
+            <div className="radar-panel-heading">
+              <div><span>TODAY</span><h3>今日技术雷达</h3></div>
+              <i>{radarItems.length.toString().padStart(2, "0")}</i>
+            </div>
+            <div className="radar-list">
+              {radarItems.map((item, index) => (
+                <a href={`/article/?id=${item.id}`} key={item.id}>
+                  <span>#{index + 1}</span>
+                  <div>
+                    <time>{new Date(item.source_published_at || item.created_at).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</time>
+                    <h4>{item.title_zh || item.title}</h4>
+                    <p>{item.source || labels[item.category]}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </aside>
         </div>
       ) : (
         <div className="feed-empty">
@@ -161,7 +208,7 @@ export function PublicFeed() {
           </div>
           <p className="source-intro">这些是本站候选内容的抓取来源；文章只有经过我的阅读与审核后，才会进入“技术文章”精选。</p>
           <div className="public-source-grid">
-            {sources.map((source) => (
+            {sources.filter((source) => source.category === "tech_feed").map((source) => (
               <a key={source.id} href={source.homepage_url!} target="_blank" rel="noreferrer">
                 <span>{source.source_type}</span>
                 <b>{source.name}</b>
