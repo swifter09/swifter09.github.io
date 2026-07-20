@@ -265,6 +265,16 @@ export function AdminDashboard() {
           {items.length ? items.map((item) => (
             <article key={item.id}>
               <div><span>{item.category}</span><b>{item.status}</b></div>
+              <div className="review-source">
+                <span>来源</span>
+                {item.url ? (
+                  <a href={item.url} target="_blank" rel="noreferrer">
+                    {item.source || "未标明来源"} ↗
+                  </a>
+                ) : (
+                  <b>{item.source || "未标明来源"}</b>
+                )}
+              </div>
               <h3>{item.title_zh || item.title}</h3>
               {(item.summary_zh || item.summary) && <p>{item.summary_zh || item.summary}</p>}
               {item.title_zh && (
