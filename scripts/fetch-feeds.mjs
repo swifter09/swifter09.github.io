@@ -40,11 +40,11 @@ function attr(block, tag, attribute) {
 function parseFeed(xml) {
   const rssItems = xml.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi);
   const atomEntries = xml.match(/<entry(?:\s[^>]*)?>[\s\S]*?<\/entry>/gi);
-  return (rssItems ?? atomEntries ?? []).slice(0, 30).map((block) => {
-    const link = field(block, ["link"]) || attr(block, "link", "href");
-    const id = field(block, ["guid", "id"]) || link;
+  return (rssItems ?? atomEntries ?? []).slice(0, 10).map((block) => {
+    const id = field(block, ["guid", "id"]);
+    const link = field(block, ["link"]) || attr(block, "link", "href") || (id.startsWith("http") ? id : "");
     return {
-      external_id: id,
+      external_id: id || link,
       title: field(block, ["title"]),
       summary: field(block, ["description", "summary", "content", "content:encoded"]).slice(0, 800),
       url: link,

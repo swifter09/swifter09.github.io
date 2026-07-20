@@ -104,6 +104,11 @@ using (public.is_blog_admin());
 insert into public.sources (name, source_type, category, feed_url, homepage_url)
 values
   ('GitHub AI & ML', 'rss', 'ai', 'https://github.blog/ai-and-ml/feed/', 'https://github.blog/ai-and-ml/'),
+  ('OpenAI News', 'rss', 'ai', 'https://openai.com/news/rss.xml', 'https://openai.com/news/'),
+  ('Google DeepMind', 'rss', 'ai', 'https://deepmind.google/blog/rss.xml', 'https://deepmind.google/blog/'),
+  ('Hugging Face Blog', 'rss', 'ai', 'https://huggingface.co/blog/feed.xml', 'https://huggingface.co/blog'),
+  ('Google AI Blog', 'rss', 'ai', 'https://blog.google/technology/ai/rss/', 'https://blog.google/technology/ai/'),
+  ('arXiv cs.AI', 'rss', 'ai', 'https://rss.arxiv.org/rss/cs.AI', 'https://arxiv.org/list/cs.AI/recent'),
   ('美团技术团队', 'wechat', 'tech_feed', null, 'https://tech.meituan.com'),
   ('腾讯技术工程', 'wechat', 'tech_feed', null, null),
   ('阿里云开发者', 'wechat', 'tech_feed', null, null),
