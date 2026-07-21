@@ -161,6 +161,7 @@ values
   ('Google AI Blog', 'rss', 'ai', 'https://blog.google/technology/ai/rss/', 'https://blog.google/technology/ai/'),
   ('arXiv cs.AI', 'rss', 'ai', 'https://rss.arxiv.org/rss/cs.AI', 'https://arxiv.org/list/cs.AI/recent'),
   ('罗永浩的十字路口', 'podcast', 'podcast', 'https://feed.xyzfm.space/wmnkvmrpwuww', 'https://www.xiaoyuzhoufm.com/podcast/68981df29e7bcd326eb91d88'),
+  ('高能量', 'podcast', 'podcast', 'https://feed.xyzfm.space/jhfuba3dahq8', 'https://www.xiaoyuzhoufm.com/podcast/62c6ae08c4eaa82b112b9c84'),
   ('硅谷101', 'podcast', 'podcast', 'https://feeds.fireside.fm/sv101/rss', 'https://sv101.fireside.fm'),
   ('Lex Fridman Podcast', 'podcast', 'podcast', 'https://lexfridman.com/feed/podcast/', 'https://lexfridman.com/podcast/'),
   ('Latent Space', 'podcast', 'podcast', 'https://www.latent.space/feed', 'https://www.latent.space/podcast'),

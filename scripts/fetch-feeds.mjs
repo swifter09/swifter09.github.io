@@ -430,6 +430,24 @@ async function backfillReaderContent() {
   console.log(`Created ${completed}/${pending.length} pending reader copies`);
 }
 
+const managedSources = [
+  {
+    name: "高能量",
+    source_type: "podcast",
+    category: "podcast",
+    feed_url: "https://feed.xyzfm.space/jhfuba3dahq8",
+    homepage_url: "https://www.xiaoyuzhoufm.com/podcast/62c6ae08c4eaa82b112b9c84",
+    enabled: true,
+    requires_review: true,
+  },
+];
+
+await api("sources?on_conflict=name,source_type", {
+  method: "POST",
+  headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+  body: JSON.stringify(managedSources),
+});
+
 const sourceResponse = await api(
   "sources?enabled=eq.true&feed_url=not.is.null&select=id,name,source_type,category,feed_url,homepage_url"
 );
