@@ -28,3 +28,10 @@ test("curated podcast sources include High Energy with its public RSS feed", () 
   assert.ok(fetcher.includes('name: "高能量"'));
   assert.ok(fetcher.includes('sources?on_conflict=name,source_type'));
 });
+
+test("managed review queue includes the requested Meituan Litho article", () => {
+  assert.ok(fetcher.includes('title: "Litho在美团动态化方案MTFlexbox中的实践"'));
+  assert.ok(fetcher.includes("litho-practice-in-dynamic-program-mtflexbox.html"));
+  assert.ok(fetcher.includes('source: "美团技术团队"'));
+  assert.ok(fetcher.includes('status: "review"'));
+});

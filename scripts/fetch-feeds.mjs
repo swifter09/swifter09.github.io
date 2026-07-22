@@ -448,6 +448,36 @@ await api("sources?on_conflict=name,source_type", {
   body: JSON.stringify(managedSources),
 });
 
+const managedReviewItems = [
+  {
+    title: "Litho在美团动态化方案MTFlexbox中的实践",
+    summary: "美团技术团队介绍在跨平台动态化方案 MTFlexbox 中引入 Litho，通过视图扁平化、异步布局和细粒度复用优化复杂 RecyclerView 列表的层级、内存占用与滑动性能。",
+    url: "https://tech.meituan.com/2019/09/19/litho-practice-in-dynamic-program-mtflexbox.html",
+    source: "美团技术团队",
+    category: "article",
+    source_published_at: "2019-09-19T00:00:00+08:00",
+  },
+];
+
+for (const item of managedReviewItems) {
+  const sourceLookup = await api(
+    `sources?name=eq.${encodeURIComponent(item.source)}&select=id,name,category&limit=1`
+  );
+  const [source] = await sourceLookup.json();
+  const dedupeSource = source ?? { id: item.source, category: item.category };
+  await api("content_items", {
+    method: "POST",
+    headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
+    body: JSON.stringify({
+      ...item,
+      external_id: item.url,
+      source_id: source?.id ?? null,
+      dedupe_key: createDedupeKey(dedupeSource, item.title),
+      status: "review",
+    }),
+  });
+}
+
 const sourceResponse = await api(
   "sources?enabled=eq.true&feed_url=not.is.null&select=id,name,source_type,category,feed_url,homepage_url"
 );
