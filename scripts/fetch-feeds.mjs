@@ -465,7 +465,7 @@ for (const item of managedReviewItems) {
   );
   const [source] = await sourceLookup.json();
   const dedupeSource = source ?? { id: item.source, category: item.category };
-  await api("content_items", {
+  await api("content_items?on_conflict=url", {
     method: "POST",
     headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
     body: JSON.stringify({
