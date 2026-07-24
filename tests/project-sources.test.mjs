@@ -34,4 +34,5 @@ test("managed review queue includes the requested Meituan Litho article", () => 
   assert.ok(fetcher.includes("litho-practice-in-dynamic-program-mtflexbox.html"));
   assert.ok(fetcher.includes('source: "美团技术团队"'));
   assert.ok(fetcher.includes('status: "review"'));
+  assert.ok(fetcher.includes('content_items?on_conflict=url'));
 });
