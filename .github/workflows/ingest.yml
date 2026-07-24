@@ -1,6 +1,11 @@
 name: Fetch content sources
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetch-feeds.mjs"
+      - ".github/workflows/ingest.yml"
   schedule:
     - cron: "17 0,8 * * *"
   workflow_dispatch:
