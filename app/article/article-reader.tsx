@@ -68,6 +68,54 @@ function renderInline(text: string) {
   });
 }
 
+function splitMarkdownRow(line: string) {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  const cells: string[] = [];
+  let current = "";
+  let escaped = false;
+  for (const character of trimmed) {
+    if (escaped) {
+      current += character;
+      escaped = false;
+    } else if (character === "\\") {
+      escaped = true;
+    } else if (character === "|") {
+      cells.push(current.trim());
+      current = "";
+    } else {
+      current += character;
+    }
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseMarkdownTable(lines: string[], start: number) {
+  if (!lines[start]?.includes("|") || !lines[start + 1]?.includes("|")) return null;
+  const headers = splitMarkdownRow(lines[start]);
+  const separators = splitMarkdownRow(lines[start + 1]);
+  if (
+    headers.length < 2
+    || separators.length !== headers.length
+    || !separators.every((cell) => /^:?-{3,}:?$/.test(cell.replace(/\s/g, "")))
+  ) return null;
+
+  const alignments = separators.map((cell) => {
+    const value = cell.replace(/\s/g, "");
+    if (value.startsWith(":") && value.endsWith(":")) return "center";
+    if (value.endsWith(":")) return "right";
+    return "left";
+  });
+  const rows: string[][] = [];
+  let cursor = start + 2;
+  while (cursor < lines.length && lines[cursor].trim() && lines[cursor].includes("|")) {
+    const cells = splitMarkdownRow(lines[cursor]);
+    rows.push(headers.map((_, index) => cells[index] || ""));
+    cursor += 1;
+  }
+  return { headers, alignments, rows, length: cursor - start };
+}
+
 function ArticleNarrator({ body }: { body: string }) {
   const [speaking, setSpeaking] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -131,54 +179,82 @@ function ArticleNarrator({ body }: { body: string }) {
 
 function RichBody({ body }: { body: string }) {
   const lines = sanitizeReaderBody(body).split("\n");
-  let inCode = false;
-  const code: string[] = [];
+  const content: ReactNode[] = [];
+
+  for (let index = 0; index < lines.length;) {
+    const line = lines[index];
+    if (line.trim().startsWith("```")) {
+      const code: string[] = [];
+      const start = index;
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        code.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      content.push(<pre key={`code-${start}`}><code>{code.join("\n")}</code></pre>);
+      continue;
+    }
+
+    const table = parseMarkdownTable(lines, index);
+    if (table) {
+      content.push(
+        <div className="reader-table-scroll" key={`table-${index}`} tabIndex={0} role="region" aria-label="文章表格">
+          <table>
+            <thead>
+              <tr>{table.headers.map((header, column) => (
+                <th className={`align-${table.alignments[column]}`} key={column}>{renderInline(header)}</th>
+              ))}</tr>
+            </thead>
+            <tbody>
+              {table.rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>{row.map((cell, column) => (
+                  <td className={`align-${table.alignments[column]}`} key={column}>{renderInline(cell)}</td>
+                ))}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      index += table.length;
+      continue;
+    }
+
+    const image = line.trim().match(/^!\[([^\]]*)\]\((https?:\/\/.+)\)$/);
+    if (image) {
+      const caption = image[1].replace(/^(?:Image|图片)\s*\d*\s*[：:]\s*/i, "").trim();
+      content.push(
+        <figure className="reader-figure" key={index}>
+          <img src={image[2]} alt={caption} loading="lazy" referrerPolicy="no-referrer" />
+          {caption && <figcaption>{caption}</figcaption>}
+        </figure>
+      );
+      index += 1;
+      continue;
+    }
+    const audio = line.trim().match(/^\[((?:Audio|音频)(?:\s+\d+)?)\]\((https?:\/\/.+)\)$/i);
+    if (audio) {
+      content.push(
+        <figure className="reader-audio" key={index}>
+          <figcaption>原文音频</figcaption>
+          <audio controls preload="metadata" src={audio[2]}>您的浏览器不支持音频播放。</audio>
+        </figure>
+      );
+      index += 1;
+      continue;
+    }
+    if (/^(?:\*\s*){3,}$|^---+$/.test(line.trim())) content.push(<hr key={index} />);
+    else if (line.startsWith("### ")) content.push(<h3 key={index}>{renderInline(line.slice(4))}</h3>);
+    else if (line.startsWith("## ")) content.push(<h2 key={index}>{renderInline(line.slice(3))}</h2>);
+    else if (line.startsWith("# ")) content.push(<h2 key={index}>{renderInline(line.slice(2))}</h2>);
+    else if (/^[-*] /.test(line)) content.push(<div className="reader-list-item" key={index}>{renderInline(line.slice(2))}</div>);
+    else if (line.startsWith("> ")) content.push(<blockquote key={index}>{renderInline(line.slice(2))}</blockquote>);
+    else if (line.trim()) content.push(<p key={index}>{renderInline(line)}</p>);
+    index += 1;
+  }
 
   return (
-    <div className="reader-body">
-      {lines.map((line, index) => {
-        if (line.trim().startsWith("```")) {
-          if (inCode) {
-            inCode = false;
-            const value = code.splice(0).join("\n");
-            return <pre key={index}><code>{value}</code></pre>;
-          }
-          inCode = true;
-          return null;
-        }
-        if (inCode) {
-          code.push(line);
-          return null;
-        }
-        const image = line.trim().match(/^!\[([^\]]*)\]\((https?:\/\/.+)\)$/);
-        if (image) {
-          const caption = image[1].replace(/^(?:Image|图片)\s*\d*\s*[：:]\s*/i, "").trim();
-          return (
-            <figure className="reader-figure" key={index}>
-              <img src={image[2]} alt={caption} loading="lazy" referrerPolicy="no-referrer" />
-              {caption && <figcaption>{caption}</figcaption>}
-            </figure>
-          );
-        }
-        const audio = line.trim().match(/^\[((?:Audio|音频)(?:\s+\d+)?)\]\((https?:\/\/.+)\)$/i);
-        if (audio) {
-          return (
-            <figure className="reader-audio" key={index}>
-              <figcaption>原文音频</figcaption>
-              <audio controls preload="metadata" src={audio[2]}>您的浏览器不支持音频播放。</audio>
-            </figure>
-          );
-        }
-        if (/^(?:\*\s*){3,}$|^---+$/.test(line.trim())) return <hr key={index} />;
-        if (line.startsWith("### ")) return <h3 key={index}>{renderInline(line.slice(4))}</h3>;
-        if (line.startsWith("## ")) return <h2 key={index}>{renderInline(line.slice(3))}</h2>;
-        if (line.startsWith("# ")) return <h2 key={index}>{renderInline(line.slice(2))}</h2>;
-        if (/^[-*] /.test(line)) return <div className="reader-list-item" key={index}>{renderInline(line.slice(2))}</div>;
-        if (line.startsWith("> ")) return <blockquote key={index}>{renderInline(line.slice(2))}</blockquote>;
-        if (!line.trim()) return null;
-        return <p key={index}>{renderInline(line)}</p>;
-      })}
-    </div>
+    <div className="reader-body">{content}</div>
   );
 }
 
