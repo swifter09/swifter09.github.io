@@ -44,6 +44,14 @@ test("reader renders remote Markdown images and audio instead of source labels",
   assert.match(reader, /sourceMetadataIndex/);
 });
 
+test("reader renders Markdown tables as responsive semantic tables", () => {
+  assert.match(reader, /parseMarkdownTable/);
+  assert.match(reader, /reader-table-scroll/);
+  assert.match(reader, /<table>/);
+  assert.match(reader, /<thead>/);
+  assert.match(reader, /<tbody>/);
+});
+
 test("reader supports persisted Chinese and English article bodies", () => {
   assert.match(reader, /reader_content_zh/);
   assert.match(reader, /language-switcher/);
