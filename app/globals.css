@@ -277,6 +277,18 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
 .reader-body strong { color: var(--text); font-weight: 650; }
 .reader-body p > code { padding: 2px 5px; border: 1px solid var(--line); background: var(--panel); color: var(--green); font: .85em "SFMono-Regular", Consolas, monospace; }
 .reader-body hr { margin: 42px 0; border: 0; border-top: 1px solid var(--line); }
+.reader-table-scroll { width: 100%; margin: 30px 0 38px; overflow-x: auto; border: 1px solid var(--line); background: rgba(10,15,19,.72); scrollbar-color: var(--green) var(--panel); }
+.reader-table-scroll:focus-visible { outline: 1px solid var(--green); outline-offset: 3px; }
+.reader-table-scroll table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 13px; line-height: 1.65; }
+.reader-table-scroll th, .reader-table-scroll td { padding: 13px 16px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); vertical-align: top; }
+.reader-table-scroll th:last-child, .reader-table-scroll td:last-child { border-right: 0; }
+.reader-table-scroll tbody tr:last-child td { border-bottom: 0; }
+.reader-table-scroll th { background: rgba(154,247,194,.07); color: var(--green); font: 10px/1.5 "SFMono-Regular", Consolas, monospace; letter-spacing: .04em; }
+.reader-table-scroll td { color: #bdc8ca; }
+.reader-table-scroll tbody tr:nth-child(even) { background: rgba(255,255,255,.018); }
+.reader-table-scroll .align-left { text-align: left; }
+.reader-table-scroll .align-center { text-align: center; }
+.reader-table-scroll .align-right { text-align: right; }
 .reader-figure { max-width: 980px; margin: 44px 0; }
 .reader-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: var(--panel); }
 .reader-figure figcaption { margin-top: 10px; color: var(--muted); font-size: 10px; line-height: 1.6; }
@@ -358,6 +370,8 @@ footer p { text-align: center; } footer > span { text-align: right; font: 9px va
   .news-panel, .podcast-card, .projects-panel, .sources-panel { padding: 20px; }
   .news-item { grid-template-columns: 58px 1fr; }
   .news-source { display: none; }
+  .reader-table-scroll { width: calc(100vw - 40px); }
+  .reader-table-scroll table { min-width: 560px; }
   .project-grid { grid-template-columns: 1fr; }
   .published-grid { grid-template-columns: 1fr; }
   .published-card { grid-template-columns: 1fr; min-height: 0; }
